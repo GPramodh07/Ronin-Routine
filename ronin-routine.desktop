@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Ronin Routine
+Comment=Stoic productivity dashboard for high-performers
+Exec=python3 "/mnt/projects/Ronin Routine /src/main.py"
+Icon=/mnt/projects/Ronin Routine /assets/app_icon.png
+Terminal=false
+Type=Application
+Categories=Utility;Office;Qt;
+StartupNotify=true

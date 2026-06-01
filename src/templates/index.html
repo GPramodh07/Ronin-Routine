@@ -1,0 +1,1904 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Ronin Routine - Mindful Focus</title>
+    
+    <!-- CSS and Fonts -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Hanken+Grotesk:wght@400;600&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet"/>
+    
+    <!-- QWebChannel JS library (Built-in to QtWebEngine) -->
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+
+    <script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                "surface": "#1d100e",
+                "surface-container": "#2b1c19",
+                "secondary": "#e1c28e",
+                "inverse-surface": "#f8dcd8",
+                "on-surface": "#f8dcd8",
+                "surface-container-lowest": "#180b09",
+                "surface-dim": "#1d100e",
+                "surface-container-highest": "#42312e",
+                "tertiary": "#bcc3ff",
+                "outline-variant": "#5a403c",
+                "surface-container-low": "#261816",
+                "on-secondary": "#402d06",
+                "primary-container": "#8b0000",
+                "on-surface-variant": "#e3beb8",
+                "background": "#1d100e",
+                "primary": "#ffb4a8",
+                "outline": "#aa8984",
+                "surface-bright": "#473532",
+                "on-background": "#f8dcd8",
+                "secondary-container": "#5b461c",
+              },
+              "borderRadius": {
+                "DEFAULT": "0px",
+                "lg": "0px",
+                "xl": "0px",
+                "full": "0px"
+              },
+              "spacing": {
+                "margin-edge": "40px",
+                "unit": "8px",
+                "gutter": "24px",
+                "shoji-gap": "12px"
+              },
+              "fontFamily": {
+                "headline-lg": ["Libre Caslon Text", "serif"],
+                "headline-md": ["Libre Caslon Text", "serif"],
+                "headline-sm": ["Libre Caslon Text", "serif"],
+                "body-lg": ["Hanken Grotesk", "sans-serif"],
+                "body-md": ["Hanken Grotesk", "sans-serif"],
+                "label-caps": ["JetBrains Mono", "monospace"]
+              }
+            }
+          }
+        }
+    </script>
+    
+    <style>
+        /* Custom Zen Wabi-Sabi and Ink effects */
+        .ink-border {
+            border: 1px solid theme('colors.outline');
+            transition: all 0.3s ease;
+        }
+        .ink-border-active {
+            border: 2px solid theme('colors.primary');
+            box-shadow: 0 0 10px rgba(255, 180, 168, 0.2);
+        }
+        /* Custom Task Actions (Tick / Cross buttons) */
+        .katana-action-btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border: 1px solid theme('colors.outline');
+            background-color: transparent;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        
+        .katana-action-btn:hover {
+            background-color: theme('colors.surface-container-highest');
+        }
+
+        /* Completed (Slashed) tick button */
+        .katana-action-btn.tick-completed {
+            border-color: theme('colors.primary');
+            background-color: theme('colors.primary-container');
+        }
+        
+        .katana-action-btn.tick-completed::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: -2px;
+            right: -2px;
+            height: 2.5px;
+            background-color: theme('colors.primary');
+            transform: translateY(-50%) rotate(-45deg);
+            animation: slash 0.25s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+        }
+        
+        @keyframes slash {
+            0% { width: 0%; opacity: 0; }
+            100% { width: 120%; opacity: 1; }
+        }
+
+        /* Crossed-out fail button */
+        .katana-action-btn.cross-completed {
+            border-color: #ef4444;
+            background-color: rgba(239, 68, 68, 0.2);
+        }
+        .katana-action-btn.cross-completed::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 2px;
+            right: 2px;
+            height: 2px;
+            background-color: #ef4444;
+            transform: translateY(-50%) rotate(45deg);
+        }
+        .katana-action-btn.cross-completed::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 2px;
+            right: 2px;
+            height: 2px;
+            background-color: #ef4444;
+            transform: translateY(-50%) rotate(-45deg);
+        }
+
+        .task-completed-text {
+            text-decoration: line-through;
+            color: theme('colors.on-surface-variant');
+            opacity: 0.55;
+            transition: all 0.3s ease;
+        }
+
+        .task-crossed-text {
+            text-decoration: line-through;
+            color: #ef4444;
+            opacity: 0.55;
+            transition: all 0.3s ease;
+        }
+
+        /* Parchment texture simulation */
+        .bg-parchment {
+            background-color: theme('colors.surface-container-lowest');
+            background-image: 
+                radial-gradient(theme('colors.surface-variant') 0.5px, transparent 0.5px),
+                radial-gradient(theme('colors.surface-variant') 0.5px, theme('colors.surface-container-lowest') 0.5px);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            background-blend-mode: multiply;
+        }
+
+        /* Floating backgrounds */
+        .hero-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            filter: brightness(0.9) contrast(1.15); /* Vibrant full colors, making original artwork pop */
+            transition: background-image 0.8s ease, opacity 0.8s ease;
+        }
+
+        /* Dynamic Theme Specific Borders */
+        .dashboard-dojo .card-container {
+            border: 1px solid theme('colors.outline-variant');
+            background-color: rgba(29, 16, 14, 0.85);
+        }
+
+        .dashboard-sumie .card-container {
+            border: 2px solid theme('colors.outline');
+            background-color: rgba(24, 11, 9, 0.92);
+            border-image: linear-gradient(135deg, #aa8984 0%, #8b0000 50%, #aa8984 100%) 1;
+        }
+
+        /* Katana Progress Bar (Sword style) */
+        .katana-progress-track {
+            position: relative;
+            height: 12px;
+            background-color: theme('colors.surface-container-highest');
+            border: 1px solid theme('colors.outline');
+        }
+        .katana-progress-blade {
+            height: 100%;
+            background: linear-gradient(90deg, theme('colors.primary-container') 0%, theme('colors.primary') 100%);
+            transition: width 0.3s ease;
+            position: relative;
+        }
+        .katana-progress-handle {
+            position: absolute;
+            right: -6px;
+            top: -4px;
+            width: 8px;
+            height: 18px;
+            background-color: theme('colors.secondary');
+            border: 1.5px solid theme('colors.outline');
+            box-shadow: 0 0 4px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+
+        /* Cherry blossom particles */
+        #sakura-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Mini Spotify Premium Styles */
+        .spotify-disk-container {
+            perspective: 800px;
+        }
+        .spotify-disk {
+            box-shadow: 0 0 12px rgba(255, 180, 168, 0.15);
+            transition: transform 0.3s ease;
+        }
+        .spotify-player-card {
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .spotify-player-card:hover {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+        /* Custom progress slider hilt thumb styling */
+        .spotify-progress {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            border-radius: 2px;
+            margin: 6px 0;
+        }
+        .spotify-progress::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: theme('colors.surface-container-highest');
+            border-radius: 2px;
+        }
+        .spotify-progress::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 8px;
+            height: 16px;
+            background: theme('colors.primary');
+            border: 1px solid theme('colors.outline');
+            border-radius: 1px;
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+            transition: transform 0.15s ease, background-color 0.15s ease;
+        }
+        .spotify-progress::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: theme('colors.secondary');
+        }
+        .spotify-playlist::-webkit-scrollbar {
+            width: 4px;
+        }
+        .spotify-playlist::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .spotify-playlist::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+        .spotify-playlist::-webkit-scrollbar-thumb:hover {
+            background: theme('colors.primary');
+        }
+        /* Playlist item transitions */
+        .spotify-song-item {
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md antialiased min-h-screen flex selection:bg-primary-container selection:text-primary">
+
+    <!-- Hero Overlay Background (Controlled by Switcher) -->
+    <div id="app-hero-bg" class="hero-bg" style="background-image: url('../../assets/bg_dojo.jpg'); opacity: 0.35;"></div>
+    <div id="theme-color-overlay" class="fixed inset-0 z-[-1] bg-primary-container/5 transition-colors duration-500"></div>
+
+    <!-- SideNavBar (Desktop) -->
+    <nav aria-label="Sidebar Navigation" class="hidden lg:flex flex-col h-full sticky left-0 top-0 h-screen w-64 border-r border-outline bg-surface-container-low z-20">
+        <!-- Header / User Info -->
+        <div class="p-6 border-b border-outline">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-primary-container border border-primary flex items-center justify-center text-primary font-headline-md shadow-inner">
+                    R
+                </div>
+                <div>
+                    <h2 id="profile-name" class="font-headline-sm text-lg text-primary leading-tight">Ronin Warrior</h2>
+                    <p id="profile-level" class="font-label-caps text-xs text-on-surface-variant">Level 14 Disciplined</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- CTA - Quick start timer -->
+        <div class="p-4">
+            <button onclick="startPresetTimer(25, 'focus', 'Standard Pomodoro')" class="w-full bg-primary-container border border-primary text-primary hover:bg-primary hover:text-surface-container-lowest font-label-caps py-3 transition-all flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-sm">bolt</span>
+                Strike Focus
+            </button>
+        </div>
+
+        <!-- Tabs Menu -->
+        <div class="flex-1 py-4 flex flex-col gap-1">
+            <button onclick="switchTab('tasks')" id="tab-btn-tasks" class="tab-btn bg-primary-container/20 text-primary border-l-4 border-primary px-4 py-3 flex items-center gap-3 transition-all text-left">
+                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">edit_note</span>
+                <span class="font-label-caps text-xs">The Scrolls (Tasks)</span>
+            </button>
+            <button onclick="switchTab('meditate')" id="tab-btn-meditate" class="tab-btn text-on-surface-variant px-4 py-3 flex items-center gap-3 hover:bg-surface-variant transition-all text-left border-l-4 border-transparent">
+                <span class="material-symbols-outlined">spa</span>
+                <span class="font-label-caps text-xs">Meditate (Zen)</span>
+            </button>
+            <button onclick="switchTab('wisdom')" id="tab-btn-wisdom" class="tab-btn text-on-surface-variant px-4 py-3 flex items-center gap-3 hover:bg-surface-variant transition-all text-left border-l-4 border-transparent">
+                <span class="material-symbols-outlined">auto_stories</span>
+                <span class="font-label-caps text-xs">Wisdom scrolls</span>
+            </button>
+            <button onclick="switchTab('stats')" id="tab-btn-stats" class="tab-btn text-on-surface-variant px-4 py-3 flex items-center gap-3 hover:bg-surface-variant transition-all text-left border-l-4 border-transparent">
+                <span class="material-symbols-outlined">query_stats</span>
+                <span class="font-label-caps text-xs">Honor Stats</span>
+            </button>
+        </div>
+
+        <!-- Footer -->
+        <div class="p-4 border-t border-outline flex flex-col gap-1">
+            <div class="px-4 py-2 flex flex-col gap-1 text-[11px] font-label-caps text-on-surface-variant/70">
+                <span>XP Tracker</span>
+                <div class="w-full bg-surface-container-highest h-1.5 border border-outline/30">
+                    <div id="sidebar-xp-bar" class="bg-primary h-full" style="width: 40%;"></div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Workspace Area -->
+    <div class="flex-1 flex flex-col min-w-0 z-10 dashboard-dojo" id="dashboard-wrapper">
+        
+        <!-- TopNavBar -->
+        <header class="flex justify-between items-center w-full px-margin-edge py-4 border-b border-outline bg-surface/90 backdrop-blur-md sticky top-0 z-20">
+            <div class="flex items-center gap-3">
+                <h1 class="font-headline-sm text-xl font-bold tracking-widest text-primary uppercase">Bushido Focus</h1>
+                <span class="text-xs bg-primary-container text-primary px-2.5 py-0.5 border border-primary/30 font-label-caps uppercase" id="dashboard-indicator">Dojo Mode</span>
+            </div>
+            
+            <div class="flex items-center gap-6">
+                <!-- Dashboard Toggle -->
+                <div class="flex items-center bg-surface-container border border-outline p-1 gap-1">
+                    <button onclick="setDashboardTheme('dojo')" id="toggle-btn-dojo" class="px-3 py-1 font-label-caps text-[10px] bg-primary text-surface-container-lowest transition-all">Dojo Theme</button>
+                    <button onclick="setDashboardTheme('sumie')" id="toggle-btn-sumie" class="px-3 py-1 font-label-caps text-[10px] text-on-surface-variant hover:text-primary transition-all">Sumi-e Theme</button>
+                </div>
+                
+                <!-- Extra Tray status -->
+                <div id="global-timer-status" class="hidden md:flex items-center gap-2 border border-primary/30 px-3 py-1 bg-surface-container-lowest">
+                    <span class="animate-pulse w-2 h-2 bg-primary"></span>
+                    <span class="font-label-caps text-xs text-primary" id="global-timer-text">Focusing: 25:00</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Canvas -->
+        <main class="flex-1 overflow-y-auto p-4 md:p-gutter lg:p-margin-edge w-full flex flex-col gap-gutter pb-32">
+            
+            <!-- SECTION 1: TASKS TAB -->
+            <div id="tab-tasks" class="tab-content active">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+                    
+                    <!-- Left Column: The Scrolls (Quest List) -->
+                    <section class="lg:col-span-5 flex flex-col gap-unit">
+                        <div class="flex items-center justify-between border-b-2 border-primary pb-2 mb-4">
+                            <h2 class="font-headline-md text-2xl text-on-surface flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary text-2xl">auto_stories</span>
+                                The Scrolls
+                            </h2>
+                        </div>
+                        
+                        <div class="card-container bg-parchment p-6 shadow-sm flex flex-col gap-6 relative ink-border">
+                            <!-- Decorative paper badge -->
+                            <div class="absolute -top-3 -right-3 w-6 h-6 bg-primary opacity-80" style="clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);"></div>
+                            
+                            <!-- Input -->
+                            <div class="relative">
+                                <input id="task-input" onkeydown="handleTaskInput(event)" class="w-full bg-transparent border-b border-outline py-3 px-2 font-body-lg text-lg text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:border-primary transition-colors" placeholder="Engrave New Quest..." type="text"/>
+                                <button onclick="addNewTask()" class="absolute right-2 top-1/2 -translate-y-1/2 text-primary hover:text-white transition-colors">
+                                    <span class="material-symbols-outlined text-2xl">add_circle</span>
+                                </button>
+                            </div>
+
+                            <!-- Quest completion stats tracker -->
+                            <div class="flex flex-col gap-1.5 px-1 mt-2">
+                                <div class="flex items-center justify-between text-xs font-label-caps text-on-surface-variant">
+                                    <span>Quest Progress</span>
+                                    <span id="scroll-progress-label">0 of 0 (0%) Slashed</span>
+                                </div>
+                                <div class="w-full bg-surface-container-highest h-2 border border-outline/30">
+                                    <div id="scroll-progress-bar" class="bg-primary h-full transition-all duration-300" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Tasks List Container -->
+                            <div class="flex flex-col gap-3 min-h-[220px]" id="tasks-list">
+                                <!-- Tasks injected dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Quote Display -->
+                        <div class="card-container bg-surface-container-low p-8 relative ink-border border-l-4 border-l-primary flex items-center justify-center min-h-[140px] mt-4">
+                            <span class="absolute top-2 left-4 text-5xl text-outline opacity-20 font-headline-lg">"</span>
+                            <blockquote class="text-center z-10 max-w-lg">
+                                <p id="quote-text" class="font-body-lg text-lg text-on-surface italic leading-snug">The focused mind can pierce through stone.</p>
+                                <footer id="quote-author" class="mt-4 font-label-caps text-[10px] text-primary tracking-widest uppercase">— Way of the Ronin</footer>
+                            </blockquote>
+                        </div>
+                    </section>
+
+                    <!-- Right Column: Focus and Rest timers -->
+                    <section class="lg:col-span-7 flex flex-col gap-gutter">
+                        <!-- Active Timer Widget -->
+                        <div id="active-timer-widget" class="card-container bg-surface-container p-6 ink-border flex flex-col gap-4 relative overflow-hidden" style="display: none;">
+                            <div class="absolute inset-0 bg-primary-container/5 pointer-events-none"></div>
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-primary animate-spin" style="animation-duration: 10s;">spa</span>
+                                    <span class="font-headline-sm text-lg text-on-surface uppercase tracking-wider" id="active-timer-title">Focus Ritual</span>
+                                </div>
+                                <span id="active-timer-badge" class="font-label-caps text-xs bg-primary-container border border-primary/40 px-2 py-0.5 text-primary">Active</span>
+                            </div>
+                            
+                            <div class="text-center py-6">
+                                <div class="text-6xl font-headline-lg text-primary tracking-widest" id="active-timer-clock">25:00</div>
+                                <div class="font-label-caps text-xs text-on-surface-variant mt-2" id="active-timer-preset">Preset: Standard rest</div>
+                            </div>
+
+                            <!-- Katana Progress Bar -->
+                            <div class="katana-progress-track mt-2">
+                                <div id="active-timer-progress" class="katana-progress-blade" style="width: 100%;">
+                                    <div class="katana-progress-handle"></div>
+                                </div>
+                            </div>
+
+                            <!-- Controls -->
+                            <div class="flex justify-center gap-4 mt-2">
+                                <button onclick="pauseTimer()" id="btn-pause" class="px-6 py-2 border border-outline bg-surface hover:border-primary font-label-caps text-xs text-on-surface transition-all flex items-center gap-1.5">
+                                    <span class="material-symbols-outlined text-sm">pause</span> Pause
+                                </button>
+                                <button onclick="resumeTimer()" id="btn-resume" class="hidden px-6 py-2 border border-primary bg-primary-container hover:bg-primary hover:text-surface-container-lowest font-label-caps text-xs text-primary transition-all flex items-center gap-1.5">
+                                    <span class="material-symbols-outlined text-sm">play_arrow</span> Resume
+                                </button>
+                                <button onclick="cancelTimer()" class="px-6 py-2 border border-primary text-primary hover:bg-primary-container font-label-caps text-xs transition-all flex items-center gap-1.5">
+                                    <span class="material-symbols-outlined text-sm">restart_alt</span> Reset
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Rituals of Time Choice Grid -->
+                        <div class="flex flex-col gap-unit">
+                            <div class="flex items-center justify-between border-b-2 border-primary pb-2 mb-4">
+                                <h2 class="font-headline-md text-2xl text-on-surface flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-primary text-2xl">timer</span>
+                                    Rituals of Time
+                                </h2>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-shoji-gap">
+                                <!-- Card 1 -->
+                                <div onclick="startPresetTimer(30, 'focus', 'Short Rest')" class="card-container ink-border bg-surface p-6 flex flex-col items-center text-center gap-3 hover:bg-surface-container-highest cursor-pointer group relative overflow-hidden">
+                                    <div class="absolute inset-0 bg-primary/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                                    <h3 class="font-headline-sm text-lg text-on-surface relative z-10">Short Rest</h3>
+                                    <div class="text-4xl font-headline-lg text-primary relative z-10">30<span class="text-lg">m</span></div>
+                                    <p class="font-label-caps text-[10px] text-on-surface-variant relative z-10">25 Focus / 5 Break</p>
+                                </div>
+                                <!-- Card 2 -->
+                                <div onclick="startPresetTimer(60, 'focus', 'Long Rest')" class="card-container ink-border bg-surface p-6 flex flex-col items-center text-center gap-3 hover:bg-surface-container-highest cursor-pointer group relative overflow-hidden">
+                                    <div class="absolute inset-0 bg-primary/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                                    <h3 class="font-headline-sm text-lg text-on-surface relative z-10">Long Rest</h3>
+                                    <div class="text-4xl font-headline-lg text-primary relative z-10">1<span class="text-lg">h</span></div>
+                                    <p class="font-label-caps text-[10px] text-on-surface-variant relative z-10">50 Focus / 10 Break</p>
+                                </div>
+                                <!-- Card 3 - Custom Timer -->
+                                <div class="card-container ink-border bg-surface p-6 flex flex-col items-center text-center gap-3">
+                                    <h3 class="font-headline-sm text-lg text-on-surface">The Artisan</h3>
+                                    <div class="flex items-center justify-center gap-1.5 my-1">
+                                        <input type="number" id="custom-minutes" value="45" min="1" max="180" class="w-16 bg-surface-container text-center border-b border-outline py-1 font-label-caps text-lg text-primary focus:outline-none focus:border-primary"/>
+                                        <span class="font-label-caps text-xs text-on-surface-variant">mins</span>
+                                    </div>
+                                    <button onclick="startCustomTimer()" class="w-full bg-primary-container border border-primary text-primary font-label-caps py-2 text-xs hover:bg-primary hover:text-surface-container-lowest transition-colors mt-auto">
+                                        Forge Timer
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Premium Zen Mini Spotify Player (Focus Tab) -->
+                        <div class="spotify-player-card border border-outline/30 bg-surface-container-lowest/90 p-5 w-full flex flex-col gap-4 relative overflow-hidden ink-border">
+                            <!-- Background overlay wash -->
+                            <div class="absolute inset-0 bg-primary/5 pointer-events-none opacity-30"></div>
+                            
+                            <!-- Header / Active Indicator -->
+                            <div class="flex items-center justify-between border-b border-outline/20 pb-2 relative z-10">
+                                <div class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-primary text-lg spotify-logo-spin">library_music</span>
+                                    <span class="font-label-caps text-[10px] text-primary tracking-widest uppercase">Focus Soundscapes</span>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-on-surface-variant text-xs cursor-pointer hover:text-primary transition-colors" onclick="togglePlaylistCollapse(this)">expand_less</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Spinning Crest & Track Info -->
+                            <div class="flex items-center gap-4 relative z-10">
+                                <!-- Rotating crest/artwork -->
+                                <div class="w-12 h-12 rounded-full border border-primary/40 flex items-center justify-center bg-surface-container relative spotify-disk-container">
+                                    <div class="spotify-disk w-10 h-10 rounded-full border border-dashed border-primary/60 flex items-center justify-center animate-spin" style="animation-duration: 20s; animation-play-state: paused;">
+                                        <span class="material-symbols-outlined text-primary text-md">spa</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex flex-col text-left overflow-hidden">
+                                    <span class="spotify-title font-headline-sm text-sm text-on-surface font-semibold truncate tracking-wide">No Track Selected</span>
+                                    <span class="spotify-artist font-label-caps text-[9px] text-on-surface-variant/80 truncate uppercase tracking-widest mt-0.5">Way of the Ronin</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Track Progress Bar -->
+                            <div class="flex flex-col gap-1 relative z-10 w-full">
+                                <div class="relative w-full">
+                                    <!-- Range Slider -->
+                                    <input type="range" class="spotify-progress w-full accent-primary h-1 bg-surface-container cursor-pointer rounded-lg appearance-none" min="0" max="100" value="0" oninput="onSpotifyProgressInput(this)"/>
+                                </div>
+                                <div class="flex justify-between font-label-caps text-[8px] text-on-surface-variant">
+                                    <span class="spotify-time-current">00:00</span>
+                                    <span class="spotify-time-total">00:00</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Control Actions Row -->
+                            <div class="flex items-center justify-between gap-2 relative z-10 w-full">
+                                <button onclick="toggleSpotifyShuffle()" class="spotify-shuffle-btn p-1 text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center" title="Shuffle">
+                                    <span class="material-symbols-outlined text-[16px]">shuffle</span>
+                                </button>
+                                
+                                <button onclick="playPrevSpotifySong()" class="p-1 text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center" title="Previous Track">
+                                    <span class="material-symbols-outlined text-lg">skip_previous</span>
+                                </button>
+                                
+                                <button onclick="toggleSpotifyPlay()" class="spotify-play-btn w-9 h-9 rounded-full bg-primary hover:bg-transparent text-surface-container-lowest hover:text-primary border border-primary transition-all flex items-center justify-center shadow-sm" title="Play/Pause">
+                                    <span class="material-symbols-outlined text-md spotify-play-icon">play_arrow</span>
+                                </button>
+                                
+                                <button onclick="playNextSpotifySong()" class="p-1 text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center" title="Next Track">
+                                    <span class="material-symbols-outlined text-lg">skip_next</span>
+                                </button>
+                                
+                                <button onclick="cycleSpotifyRepeat()" class="spotify-repeat-btn p-1 text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center" title="Repeat Mode">
+                                    <span class="material-symbols-outlined text-[16px]">repeat</span>
+                                </button>
+                            </div>
+                            
+                            <!-- Volume slider -->
+                            <div class="flex items-center gap-2 justify-end w-full relative z-10 border-t border-outline/10 pt-2 text-[10px]">
+                                <span class="material-symbols-outlined text-on-surface-variant text-[14px]">volume_up</span>
+                                <input type="range" class="spotify-volume w-16 accent-primary bg-surface-container h-1 cursor-pointer" min="0" max="1" step="0.05" value="0.5" oninput="changeSpotifyVolume(this)"/>
+                            </div>
+                            
+                            <!-- Playlist (Collapsible) -->
+                            <div class="spotify-playlist flex flex-col gap-1.5 text-left w-full border-t border-outline/20 pt-3 max-h-[160px] overflow-y-auto pr-1">
+                                <label class="font-label-caps text-[8px] text-on-surface-variant uppercase tracking-wider mb-1">Scroll Tracks</label>
+                                <div class="spotify-playlist-container flex flex-col gap-1">
+                                    <!-- Song items dynamically injected -->
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- SECTION 2: MEDITATION TAB -->
+            <div id="tab-meditate" class="tab-content">
+                <div class="card-container bg-surface-container p-8 ink-border flex flex-col items-center justify-center min-h-[500px] relative overflow-hidden">
+                    <canvas id="sakura-canvas"></canvas>
+                    
+                    <div class="text-center z-10 max-w-md flex flex-col items-center gap-8">
+                        <div class="flex flex-col items-center">
+                            <h2 class="font-headline-md text-3xl text-primary mb-2">Zen Meditation</h2>
+                            <p class="font-body-md text-on-surface-variant text-sm">Harmonize your breathing with the sacred lotus pulse</p>
+                        </div>
+                        
+                        <!-- Pulsing Breathing Ring -->
+                        <div id="breathing-circle-container" class="relative w-48 h-48 flex items-center justify-center my-6">
+                            <!-- Background outer glow -->
+                            <div class="absolute inset-0 border border-primary/20 rounded-full scale-110"></div>
+                            
+                            <!-- Pulsing flower circle -->
+                            <div id="breathing-circle" class="absolute w-36 h-36 border-4 border-primary bg-primary-container/20 rounded-full flex items-center justify-center transition-all duration-[4000ms] ease-in-out">
+                                <div class="w-24 h-24 border border-secondary bg-surface rounded-full flex items-center justify-center">
+                                    <span id="breathing-instruction" class="font-label-caps text-xs text-primary uppercase tracking-widest">Prepare</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Info bar -->
+                        <div class="border border-outline bg-surface/80 p-4 w-full flex justify-around">
+                            <div class="text-center">
+                                <span class="block font-label-caps text-[9px] text-on-surface-variant">Inhale</span>
+                                <span class="font-headline-sm text-sm text-primary">4 Seconds</span>
+                            </div>
+                            <div class="border-r border-outline/40 h-8 self-center"></div>
+                            <div class="text-center">
+                                <span class="block font-label-caps text-[9px] text-on-surface-variant">Hold</span>
+                                <span class="font-headline-sm text-sm text-secondary">4 Seconds</span>
+                            </div>
+                            <div class="border-r border-outline/40 h-8 self-center"></div>
+                            <div class="text-center">
+                                <span class="block font-label-caps text-[9px] text-on-surface-variant">Exhale</span>
+                                <span class="font-headline-sm text-sm text-primary">4 Seconds</span>
+                            </div>
+                        </div>
+
+                        <!-- Start button -->
+                        <button onclick="toggleBreathingZen()" id="btn-breathing-control" class="px-8 py-3 bg-primary border border-primary hover:bg-transparent hover:text-primary text-surface-container-lowest font-label-caps text-xs transition-all tracking-widest uppercase mb-4">
+                            Begin Breathing Cycle
+                        </button>
+                        
+                        <!-- Premium Zen Mini Spotify Player (Meditate Tab) -->
+                        <div class="spotify-player-card border border-outline/30 bg-surface-container-lowest/90 p-5 w-full flex flex-col gap-4 mt-4 rounded-sm relative overflow-hidden ink-border">
+                            <!-- Background overlay wash -->
+                            <div class="absolute inset-0 bg-primary/5 pointer-events-none opacity-30"></div>
+                            
+                            <!-- Header / Active Indicator -->
+                            <div class="flex items-center justify-between border-b border-outline/20 pb-2 relative z-10">
+                                <div class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-primary text-lg spotify-logo-spin">library_music</span>
+                                    <span class="font-label-caps text-[10px] text-primary tracking-widest uppercase">Meditate Soundscapes</span>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-on-surface-variant text-xs cursor-pointer hover:text-primary transition-colors" onclick="togglePlaylistCollapse(this)">expand_less</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Spinning Crest & Track Info -->
+                            <div class="flex items-center gap-4 relative z-10">
+                                <!-- Rotating crest/artwork -->
+                                <div class="w-12 h-12 rounded-full border border-primary/40 flex items-center justify-center bg-surface-container relative spotify-disk-container">
+                                    <div class="spotify-disk w-10 h-10 rounded-full border border-dashed border-primary/60 flex items-center justify-center animate-spin" style="animation-duration: 20s; animation-play-state: paused;">
+                                        <span class="material-symbols-outlined text-primary text-md">spa</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex flex-col text-left overflow-hidden">
+                                    <span class="spotify-title font-headline-sm text-sm text-on-surface font-semibold truncate tracking-wide">No Track Selected</span>
+                                    <span class="spotify-artist font-label-caps text-[9px] text-on-surface-variant/80 truncate uppercase tracking-widest mt-0.5">Way of the Ronin</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Track Progress Bar -->
+                            <div class="flex flex-col gap-1 relative z-10 w-full">
+                                <div class="relative w-full">
+                                    <!-- Range Slider -->
+                                    <input type="range" class="spotify-progress w-full accent-primary h-1 bg-surface-container cursor-pointer rounded-lg appearance-none" min="0" max="100" value="0" oninput="onSpotifyProgressInput(this)"/>
+                                </div>
+                                <div class="flex justify-between font-label-caps text-[8px] text-on-surface-variant">
+                                    <span class="spotify-time-current">00:00</span>
+                                    <span class="spotify-time-total">00:00</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Control Actions Row -->
+                            <div class="flex items-center justify-between gap-2 relative z-10 w-full">
+                                <button onclick="toggleSpotifyShuffle()" class="spotify-shuffle-btn p-1 text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center" title="Shuffle">
+                                    <span class="material-symbols-outlined text-[16px]">shuffle</span>
+                                </button>
+                                
+                                <button onclick="playPrevSpotifySong()" class="p-1 text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center" title="Previous Track">
+                                    <span class="material-symbols-outlined text-lg">skip_previous</span>
+                                </button>
+                                
+                                <button onclick="toggleSpotifyPlay()" class="spotify-play-btn w-9 h-9 rounded-full bg-primary hover:bg-transparent text-surface-container-lowest hover:text-primary border border-primary transition-all flex items-center justify-center shadow-sm" title="Play/Pause">
+                                    <span class="material-symbols-outlined text-md spotify-play-icon">play_arrow</span>
+                                </button>
+                                
+                                <button onclick="playNextSpotifySong()" class="p-1 text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center" title="Next Track">
+                                    <span class="material-symbols-outlined text-lg">skip_next</span>
+                                </button>
+                                
+                                <button onclick="cycleSpotifyRepeat()" class="spotify-repeat-btn p-1 text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center" title="Repeat Mode">
+                                    <span class="material-symbols-outlined text-[16px]">repeat</span>
+                                </button>
+                            </div>
+                            
+                            <!-- Volume slider -->
+                            <div class="flex items-center gap-2 justify-end w-full relative z-10 border-t border-outline/10 pt-2 text-[10px]">
+                                <span class="material-symbols-outlined text-on-surface-variant text-[14px]">volume_up</span>
+                                <input type="range" class="spotify-volume w-16 accent-primary bg-surface-container h-1 cursor-pointer" min="0" max="1" step="0.05" value="0.5" oninput="changeSpotifyVolume(this)"/>
+                            </div>
+                            
+                            <!-- Playlist (Collapsible) -->
+                            <div class="spotify-playlist flex flex-col gap-1.5 text-left w-full border-t border-outline/20 pt-3 max-h-[160px] overflow-y-auto pr-1">
+                                <label class="font-label-caps text-[8px] text-on-surface-variant uppercase tracking-wider mb-1">Scroll Tracks</label>
+                                <div class="spotify-playlist-container flex flex-col gap-1">
+                                    <!-- Song items dynamically injected -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 3: WISDOM TAB -->
+            <div id="tab-wisdom" class="tab-content">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+                    <!-- Left: Scroll library -->
+                    <div class="card-container bg-parchment p-6 ink-border flex flex-col gap-6">
+                        <h2 class="font-headline-md text-2xl text-primary border-b border-outline pb-2">Sacred Scrolls</h2>
+                        
+                        <div class="flex flex-col gap-4 overflow-y-auto max-h-[420px] pr-2" id="wisdom-scrolls-list">
+                            <!-- Quotes injected dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Right: Add custom scroll -->
+                    <div class="card-container bg-surface-container p-6 ink-border flex flex-col gap-6">
+                        <h2 class="font-headline-md text-2xl text-primary border-b border-outline pb-2">Engrave Your Wisdom</h2>
+                        <p class="font-body-md text-on-surface-variant text-xs">Record quotes, warnings, or guidelines to guide your path.</p>
+                        
+                        <div class="flex flex-col gap-4">
+                            <div class="flex flex-col gap-1.5">
+                                <label class="font-label-caps text-[10px] text-on-surface-variant">Quote Text</label>
+                                <textarea id="new-quote-text" rows="4" class="w-full bg-surface border border-outline p-3 font-body-md text-sm text-on-surface focus:outline-none focus:border-primary resize-none" placeholder="Enter quote text..."></textarea>
+                            </div>
+                            
+                            <div class="flex flex-col gap-1.5">
+                                <label class="font-label-caps text-[10px] text-on-surface-variant">Author</label>
+                                <input type="text" id="new-quote-author" class="w-full bg-surface border border-outline p-3 font-body-md text-sm text-on-surface focus:outline-none focus:border-primary" placeholder="Miyamoto Musashi, etc."/>
+                            </div>
+                            
+                            <button onclick="saveCustomQuote()" class="w-full bg-primary text-surface-container-lowest hover:bg-transparent hover:text-primary border border-primary font-label-caps py-3 transition-colors text-xs uppercase tracking-wider">
+                                Engrave Wisdom Scroll
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 4: HONOR STATS TAB -->
+            <div id="tab-stats" class="tab-content">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter mb-6">
+                    <div class="card-container bg-surface-container p-6 ink-border flex flex-col gap-2 relative overflow-hidden">
+                        <span class="material-symbols-outlined absolute right-4 top-4 text-primary text-4xl opacity-10">bolt</span>
+                        <span class="font-label-caps text-[10px] text-on-surface-variant">Accumulated XP</span>
+                        <div class="text-3xl font-headline-md text-primary" id="stat-xp">1,400</div>
+                        <span class="font-label-caps text-[9px] text-on-surface-variant/80" id="stat-xp-details">100 XP to next level</span>
+                    </div>
+                    <div class="card-container bg-surface-container p-6 ink-border flex flex-col gap-2 relative overflow-hidden">
+                        <span class="material-symbols-outlined absolute right-4 top-4 text-primary text-4xl opacity-10">timer</span>
+                        <span class="font-label-caps text-[10px] text-on-surface-variant">Hours of Deep Focus</span>
+                        <div class="text-3xl font-headline-md text-primary" id="stat-focus-hours">5.8<span class="text-sm">h</span></div>
+                        <span class="font-label-caps text-[9px] text-on-surface-variant/80" id="stat-focus-mins">350 focus minutes</span>
+                    </div>
+                    <div class="card-container bg-surface-container p-6 ink-border flex flex-col gap-2 relative overflow-hidden">
+                        <span class="material-symbols-outlined absolute right-4 top-4 text-primary text-4xl opacity-10">done_all</span>
+                        <span class="font-label-caps text-[10px] text-on-surface-variant">Quests Slashed</span>
+                        <div class="text-3xl font-headline-md text-primary" id="stat-tasks">1</div>
+                        <span class="font-label-caps text-[9px] text-on-surface-variant/80">Completed items</span>
+                    </div>
+                    <div class="card-container bg-surface-container p-6 ink-border flex flex-col gap-2 relative overflow-hidden">
+                        <span class="material-symbols-outlined absolute right-4 top-4 text-primary text-4xl opacity-10">workspace_premium</span>
+                        <span class="font-label-caps text-[10px] text-on-surface-variant">Rituals Celebrated</span>
+                        <div class="text-3xl font-headline-md text-primary" id="stat-sessions">7</div>
+                        <span class="font-label-caps text-[9px] text-on-surface-variant/80">Pomodoros finished</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+                    <!-- Progress Card -->
+                    <div class="card-container lg:col-span-2 bg-parchment p-6 ink-border flex flex-col gap-6">
+                        <h2 class="font-headline-md text-2xl text-primary border-b border-outline pb-2">The Warrior's Progression</h2>
+                        <p class="font-body-md text-on-surface-variant text-sm">Every completed quest yields 10 XP. Every Celebrated Focus session bestows 25 XP. Maintain your daily discipline to ascend to higher levels of focus honor.</p>
+                        
+                        <div class="flex flex-col gap-2 mt-2">
+                            <div class="flex justify-between font-label-caps text-xs">
+                                <span class="text-on-surface" id="progress-level-label">Level 14 (Disciplined)</span>
+                                <span class="text-primary" id="progress-percent-label">40% XP</span>
+                            </div>
+                            <div class="w-full bg-surface-container-highest h-6 border-2 border-outline relative">
+                                <div id="progress-bar-fill" class="bg-gradient-to-r from-primary-container to-primary h-full transition-all duration-500" style="width: 40%;"></div>
+                                <div class="absolute inset-0 flex items-center justify-center font-label-caps text-[10px] text-white font-bold" id="progress-numerical-label">1400 / 1500 XP</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Level Badge -->
+                    <div class="card-container bg-surface-container p-6 ink-border flex flex-col items-center justify-center text-center gap-4 relative overflow-hidden">
+                        <div class="absolute inset-0 bg-primary-container/5"></div>
+                        <div class="w-24 h-24 border-4 border-double border-primary bg-surface flex flex-col items-center justify-center shadow-inner relative z-10">
+                            <span class="font-label-caps text-[10px] text-on-surface-variant leading-none uppercase">Rank</span>
+                            <span id="rank-badge-number" class="font-headline-lg text-4xl text-primary font-bold">14</span>
+                        </div>
+                        <div>
+                            <h3 id="rank-badge-title" class="font-headline-sm text-lg text-primary">Disciplined</h3>
+                            <p class="font-label-caps text-[10px] text-on-surface-variant mt-1">Focus Order of the Samurai</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Completed Quests Section -->
+                <div class="card-container bg-parchment p-6 ink-border flex flex-col gap-4 mt-6">
+                    <div class="flex items-center justify-between border-b border-outline pb-2">
+                        <h2 class="font-headline-md text-xl text-primary flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary text-2xl">history_edu</span>
+                            Scroll of Completed Quests
+                        </h2>
+                        <span id="completed-tasks-count" class="font-label-caps text-[10px] bg-primary-container px-2.5 py-1 text-primary border border-primary/20 rounded-sm">0 Slashed</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[300px] overflow-y-auto pr-1" id="completed-tasks-scroll">
+                        <div class="text-center py-8 text-on-surface-variant/60 font-body-md text-sm italic col-span-full">
+                            No quests completed in this routine yet. Sharpen your blade and slash your goals!
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </main>
+    </div>
+
+    <!-- BottomNavBar (Mobile Only fallback) -->
+    <nav aria-label="Bottom Navigation" class="lg:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 bg-surface border-t border-outline pb-safe shadow-lg">
+        <button onclick="switchTab('tasks')" class="flex flex-col items-center justify-center text-primary scale-110 transition-all duration-300">
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">grid_view</span>
+            <span class="font-label-caps text-[9px] mt-1">Dojo</span>
+        </button>
+        <button onclick="switchTab('meditate')" class="flex flex-col items-center justify-center text-on-surface-variant opacity-70">
+            <span class="material-symbols-outlined">spa</span>
+            <span class="font-label-caps text-[9px] mt-1">Meditate</span>
+        </button>
+        <button onclick="switchTab('wisdom')" class="flex flex-col items-center justify-center text-on-surface-variant opacity-70">
+            <span class="material-symbols-outlined">auto_stories</span>
+            <span class="font-label-caps text-[9px] mt-1">Wisdom</span>
+        </button>
+        <button onclick="switchTab('stats')" class="flex flex-col items-center justify-center text-on-surface-variant opacity-70">
+            <span class="material-symbols-outlined">query_stats</span>
+            <span class="font-label-caps text-[9px] mt-1">Stats</span>
+        </button>
+    </nav>
+
+    <!-- JavaScript core interface controller -->
+    <script>
+        let bridge = null;
+        let activeTab = 'tasks';
+        let currentTheme = 'dojo';
+        
+        // State tracking
+        let allQuests = [];
+        
+        // Timer state
+        let activeTimer = false;
+        let timerType = 'focus';
+        let totalSeconds = 0;
+
+        // Sakura particle background
+        let canvas = document.getElementById("sakura-canvas");
+        let ctx = canvas.getContext("2d");
+        let animationFrameId = null;
+        let particles = [];
+        let isBreathingZenActive = false;
+        let breathingTimer = null;
+        
+        // Initialize QWebChannel
+        document.addEventListener("DOMContentLoaded", () => {
+            if (typeof qt !== "undefined" && qt.webChannelTransport) {
+                new QWebChannel(qt.webChannelTransport, function (channel) {
+                    bridge = channel.objects.pyBridge;
+                    
+                    // Listen to Signals from Python
+                    bridge.taskAdded.connect((taskJson) => {
+                        let task = JSON.parse(taskJson);
+                        allQuests.unshift(task);
+                        appendTask(task);
+                        updateQuestProgress();
+                    });
+                    
+                    bridge.taskToggled.connect((taskJson) => {
+                        let task = JSON.parse(taskJson);
+                        allQuests = allQuests.map(q => q.id === task.id ? task : q);
+                        updateTaskElement(task);
+                        updateQuestProgress();
+                    });
+                    
+                    bridge.taskDeleted.connect((taskId) => {
+                        allQuests = allQuests.filter(q => q.id !== taskId);
+                        removeTaskElement(taskId);
+                        updateQuestProgress();
+                    });
+                    
+                    bridge.timerTicked.connect((secondsLeft, timeStr) => {
+                        updateTimerClock(secondsLeft, timeStr);
+                    });
+                    
+                    bridge.timerCompleted.connect((type, message) => {
+                        resetTimerUI(type, message);
+                    });
+                    
+                    bridge.statsUpdated.connect((statsJson) => {
+                        updateStatsUI(JSON.parse(statsJson));
+                    });
+
+                    bridge.quotesUpdated.connect((quotesJson) => {
+                        renderWisdomLibrary(JSON.parse(quotesJson));
+                    });
+                    
+                    // Initial load
+                    loadInitialState();
+                });
+            } else {
+                console.warn("Qt web channel not found, running mock browser mode.");
+                loadMockData();
+            }
+            
+            // Adjust canvas size
+            window.addEventListener("resize", resizeCanvas);
+            resizeCanvas();
+        });
+
+        // --- Core Loaders ---
+        function loadInitialState() {
+            if (!bridge) return;
+            
+            // Fetch initial tasks
+            bridge.getTasks(function(tasksJson) {
+                let tasks = JSON.parse(tasksJson);
+                renderTasks(tasks);
+            });
+            
+            // Fetch stats
+            bridge.getStats(function(statsJson) {
+                let stats = JSON.parse(statsJson);
+                updateStatsUI(stats);
+            });
+
+            // Fetch quotes
+            bridge.getQuotes(function(quotesJson) {
+                let quotes = JSON.parse(quotesJson);
+                renderWisdomLibrary(quotes);
+                
+                // Select a random quote for home page
+                if (quotes.length > 0) {
+                    let randQ = quotes[Math.floor(Math.random() * quotes.length)];
+                    document.getElementById("quote-text").textContent = randQ.text;
+                    document.getElementById("quote-author").textContent = `— ${randQ.author}`;
+                }
+            });
+
+            // Fetch songs
+            bridge.getSongs(function(songsJson) {
+                let songs = JSON.parse(songsJson);
+                initializeSpotify(songs);
+            });
+        }
+
+        // --- Task CRUD Front-End handlers ---
+        function handleTaskInput(event) {
+            if (event.key === "Enter") {
+                addNewTask();
+            }
+        }
+        
+        function addNewTask() {
+            let input = document.getElementById("task-input");
+            let title = input.value.trim();
+            if (!title) return;
+            
+            if (bridge) {
+                bridge.addTask(title);
+            } else {
+                // Mock
+                let mockTask = {
+                    id: "task_" + Date.now(),
+                    title: title,
+                    completed: false,
+                    created_at: new Date().toISOString(),
+                    completed_at: null
+                };
+                appendTask(mockTask);
+            }
+            input.value = "";
+        }
+        
+        function handleToggleTask(taskId, completed, crossed) {
+            if (bridge) {
+                bridge.toggleTask(taskId, completed, crossed);
+            } else {
+                // Mock
+                let mockTask = {
+                    id: taskId,
+                    title: document.querySelector(`[data-id="${taskId}"] .task-title`).textContent,
+                    completed: completed,
+                    crossed: crossed,
+                    created_at: new Date().toISOString(),
+                    completed_at: (completed || crossed) ? new Date().toISOString() : null
+                };
+                allQuests = allQuests.map(q => q.id === taskId ? mockTask : q);
+                updateTaskElement(mockTask);
+                updateQuestProgress();
+            }
+        }
+        
+        function handleDeleteTask(taskId) {
+            if (bridge) {
+                bridge.deleteTask(taskId);
+            } else {
+                allQuests = allQuests.filter(q => q.id !== taskId);
+                removeTaskElement(taskId);
+                updateQuestProgress();
+            }
+        }
+
+        function updateQuestProgress() {
+            let total = allQuests.length;
+            let completed = allQuests.filter(q => q.completed).length;
+            
+            let percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+            
+            document.getElementById("scroll-progress-label").textContent = `${completed} of ${total} (${percent}%) Slashed`;
+            document.getElementById("scroll-progress-bar").style.width = `${percent}%`;
+            
+            // Re-render completed tasks in Honor Stats tab
+            renderCompletedQuests();
+        }
+
+        function renderCompletedQuests() {
+            let container = document.getElementById("completed-tasks-scroll");
+            let countLabel = document.getElementById("completed-tasks-count");
+            if (!container) return;
+            
+            let completedQuests = allQuests.filter(q => q.completed);
+            
+            if (countLabel) {
+                countLabel.textContent = `${completedQuests.length} Slashed`;
+            }
+            
+            if (completedQuests.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-on-surface-variant/60 font-body-md text-sm italic col-span-full">
+                        No quests completed in this routine yet. Sharpen your blade and slash your goals!
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = "";
+            completedQuests.forEach(task => {
+                let itemDiv = document.createElement("div");
+                itemDiv.className = "flex items-center gap-3 p-3 bg-surface-container-low/80 border border-outline/30 rounded-sm relative overflow-hidden ink-border";
+                
+                itemDiv.innerHTML = `
+                    <div class="absolute -right-2 -bottom-2 text-primary opacity-5 select-none font-bold text-lg transform rotate-12">
+                        SLASHED
+                    </div>
+                    <span class="material-symbols-outlined text-primary text-md">check_circle</span>
+                    <div class="flex flex-col text-left overflow-hidden">
+                        <span class="font-body-lg text-sm text-on-surface opacity-90 truncate" title="${task.title}">${task.title}</span>
+                    </div>
+                `;
+                container.appendChild(itemDiv);
+            });
+        }
+
+        // --- UI Rendering ---
+        function renderTasks(tasks) {
+            allQuests = tasks;
+            let container = document.getElementById("tasks-list");
+            container.innerHTML = "";
+            tasks.forEach(task => appendTask(task));
+            updateQuestProgress();
+        }
+
+        function appendTask(task) {
+            let container = document.getElementById("tasks-list");
+            
+            // Check if element already exists
+            if (document.querySelector(`[data-id="${task.id}"]`)) return;
+            
+            let taskDiv = document.createElement("div");
+            taskDiv.setAttribute("data-id", task.id);
+            taskDiv.className = "group flex items-start gap-4 p-3 border border-transparent hover:border-outline/40 transition-all bg-surface-container-low/60";
+            
+            let isCrossed = task.crossed || false;
+            let tickActive = task.completed ? "tick-completed" : "";
+            let crossActive = isCrossed ? "cross-completed" : "";
+            
+            let textClass = "text-on-surface";
+            if (task.completed) textClass = "task-completed-text";
+            if (isCrossed) textClass = "task-crossed-text";
+            
+            taskDiv.innerHTML = `
+                <div class="flex items-center gap-1.5 mt-0.5 flex-shrink-0">
+                    <!-- Tick/Slash Button -->
+                    <button title="Slash Quest (Complete)" class="katana-action-btn tick-btn ${tickActive}">
+                        <span class="material-symbols-outlined text-[12px] text-primary">done</span>
+                    </button>
+                    <!-- Cross Button -->
+                    <button title="Cross Quest (Fail/Cancel)" class="katana-action-btn cross-btn ${crossActive}">
+                        <span class="material-symbols-outlined text-[12px] text-red-500">close</span>
+                    </button>
+                </div>
+                <span class="font-body-lg text-sm flex-1 task-title ${textClass}">${task.title}</span>
+                <button aria-label="Delete quest" class="delete-btn text-outline-variant hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 flex items-center justify-center p-0.5 ml-2 mt-0.5">
+                    <span class="material-symbols-outlined text-lg">close</span>
+                </button>
+            `;
+            
+            // Bind events
+            let tickBtn = taskDiv.querySelector(".tick-btn");
+            let crossBtn = taskDiv.querySelector(".cross-btn");
+            
+            tickBtn.addEventListener("click", () => {
+                let isCompleted = !tickBtn.classList.contains("tick-completed");
+                handleToggleTask(task.id, isCompleted, false);
+            });
+            
+            crossBtn.addEventListener("click", () => {
+                let isCrossed = !crossBtn.classList.contains("cross-completed");
+                handleToggleTask(task.id, false, isCrossed);
+            });
+            
+            let deleteBtn = taskDiv.querySelector(".delete-btn");
+            deleteBtn.addEventListener("click", () => {
+                handleDeleteTask(task.id);
+            });
+
+            container.appendChild(taskDiv);
+        }
+
+        function updateTaskElement(task) {
+            let elem = document.querySelector(`[data-id="${task.id}"]`);
+            if (!elem) return;
+            
+            let tickBtn = elem.querySelector(".tick-btn");
+            let crossBtn = elem.querySelector(".cross-btn");
+            let textSpan = elem.querySelector(".task-title");
+            
+            let isCrossed = task.crossed || false;
+            
+            // Reset button states
+            tickBtn.className = "katana-action-btn tick-btn";
+            crossBtn.className = "katana-action-btn cross-btn";
+            
+            if (task.completed) {
+                tickBtn.classList.add("tick-completed");
+                textSpan.className = "font-body-lg text-sm flex-1 task-title task-completed-text";
+            } else if (isCrossed) {
+                crossBtn.classList.add("cross-completed");
+                textSpan.className = "font-body-lg text-sm flex-1 task-title task-crossed-text";
+            } else {
+                textSpan.className = "font-body-lg text-sm flex-1 task-title text-on-surface";
+            }
+        }
+        
+        function removeTaskElement(taskId) {
+            let elem = document.querySelector(`[data-id="${taskId}"]`);
+            if (elem) elem.remove();
+        }
+
+        function updateStatsUI(stats) {
+            document.getElementById("profile-name").textContent = "Ronin Warrior";
+            document.getElementById("profile-level").textContent = `Level ${stats.level} ${stats.title}`;
+            
+            // Numerical XP labels
+            let nextLvlXp = (stats.level + 1) * 100;
+            let currentLvlBaseXp = stats.level * 100;
+            let neededXpInThisLvl = stats.xp - currentLvlBaseXp;
+            let percentLvlXp = Math.min(100, Math.max(0, (neededXpInThisLvl / 100) * 100));
+            
+            // Stats Panel
+            document.getElementById("stat-xp").textContent = stats.xp.toLocaleString();
+            document.getElementById("stat-xp-details").textContent = `${100 - neededXpInThisLvl} XP to Level ${stats.level + 1}`;
+            
+            let hours = (stats.total_focus_mins / 60).toFixed(1);
+            document.getElementById("stat-focus-hours").innerHTML = `${hours}<span class="text-sm">h</span>`;
+            document.getElementById("stat-focus-mins").textContent = `${stats.total_focus_mins} focus minutes`;
+            
+            document.getElementById("stat-tasks").textContent = stats.slashed_tasks;
+            document.getElementById("stat-sessions").textContent = stats.sessions_completed;
+            
+            // Side bar progress
+            document.getElementById("sidebar-xp-bar").style.width = `${percentLvlXp}%`;
+            
+            // Stats tab progression card
+            document.getElementById("progress-level-label").textContent = `Level ${stats.level} (${stats.title})`;
+            document.getElementById("progress-percent-label").textContent = `${percentLvlXp.toFixed(0)}% XP`;
+            document.getElementById("progress-bar-fill").style.width = `${percentLvlXp}%`;
+            document.getElementById("progress-numerical-label").textContent = `${stats.xp} / ${nextLvlXp} XP`;
+            
+            // Badge Card
+            document.getElementById("rank-badge-number").textContent = stats.level;
+            document.getElementById("rank-badge-title").textContent = stats.title;
+        }
+
+        function renderWisdomLibrary(quotes) {
+            let container = document.getElementById("wisdom-scrolls-list");
+            container.innerHTML = "";
+            quotes.forEach(q => {
+                let quoteDiv = document.createElement("div");
+                quoteDiv.className = "p-4 border-l-2 border-primary bg-surface/50 font-body-md text-sm";
+                quoteDiv.innerHTML = `
+                    <p class="italic text-on-surface">"${q.text}"</p>
+                    <span class="block text-right font-label-caps text-[10px] text-primary mt-1">— ${q.author}</span>
+                `;
+                container.appendChild(quoteDiv);
+            });
+        }
+        
+        function saveCustomQuote() {
+            let textElem = document.getElementById("new-quote-text");
+            let authElem = document.getElementById("new-quote-author");
+            
+            let text = textElem.value.trim();
+            let author = authElem.value.trim() || "Unknown";
+            
+            if (!text) return;
+            
+            if (bridge) {
+                bridge.addQuote(text, author);
+                textElem.value = "";
+                authElem.value = "";
+                alert("Wisdom scroll has been engraved!");
+            }
+        }
+
+        // --- Active Timer Controls ---
+        function startPresetTimer(minutes, type, name) {
+            activeTimer = true;
+            timerType = type;
+            if (bridge) {
+                bridge.startTimer(minutes, type, name);
+            } else {
+                startMockTimer(minutes, type, name);
+            }
+        }
+        
+        function startCustomTimer() {
+            let minsInput = document.getElementById("custom-minutes");
+            let mins = parseInt(minsInput.value);
+            if (isNaN(mins) || mins <= 0) return;
+            
+            startPresetTimer(mins, 'focus', 'Custom Ritual');
+        }
+        
+        function pauseTimer() {
+            activeTimer = false;
+            if (bridge) {
+                bridge.pauseTimer();
+            } else {
+                document.getElementById("btn-pause").classList.add("hidden");
+                document.getElementById("btn-resume").classList.remove("hidden");
+            }
+        }
+
+        function resumeTimer() {
+            activeTimer = true;
+            if (bridge) {
+                bridge.resumeTimer();
+            } else {
+                document.getElementById("btn-pause").classList.remove("hidden");
+                document.getElementById("btn-resume").classList.add("hidden");
+            }
+        }
+        
+        function cancelTimer() {
+            activeTimer = false;
+            if (bridge) {
+                bridge.cancelTimer();
+            } else {
+                resetTimerUI();
+            }
+        }
+
+        function updateTimerClock(secondsLeft, timeStr) {
+            activeTimer = true; // Timer is actively ticking when we get ticks!
+            document.getElementById("active-timer-widget").style.display = "flex";
+            document.getElementById("active-timer-clock").textContent = timeStr;
+            
+            // Header stats tick
+            let globalTimer = document.getElementById("global-timer-status");
+            globalTimer.classList.remove("hidden");
+            
+            let timerlbl = (bridge ? bridge.timer_type : timerType) === "focus" ? "Focusing" : "Resting";
+            document.getElementById("global-timer-text").textContent = `${timerlbl}: ${timeStr}`;
+
+            // Calculate percentage
+            let total = bridge ? bridge.timer_total_seconds : totalSeconds;
+            let percent = total > 0 ? (secondsLeft / total) * 100 : 0;
+            document.getElementById("active-timer-progress").style.width = `${percent}%`;
+            
+            let label = (bridge ? bridge.timer_type : timerType) === "focus" ? "Focus Ritual" : "Mindful Rest";
+            document.getElementById("active-timer-title").textContent = label;
+            document.getElementById("active-timer-preset").textContent = `Preset: ${bridge ? bridge.timer_active_name : 'Zen'}`;
+            
+            let active = activeTimer;
+            if (active) {
+                document.getElementById("btn-pause").classList.remove("hidden");
+                document.getElementById("btn-resume").classList.add("hidden");
+                document.getElementById("active-timer-badge").textContent = "Active";
+                document.getElementById("active-timer-badge").className = "font-label-caps text-xs bg-primary-container border border-primary/40 px-2 py-0.5 text-primary";
+            } else {
+                document.getElementById("btn-pause").classList.add("hidden");
+                document.getElementById("btn-resume").classList.remove("hidden");
+                document.getElementById("active-timer-badge").textContent = "Paused";
+                document.getElementById("active-timer-badge").className = "font-label-caps text-xs bg-surface-container-highest border border-outline/40 px-2 py-0.5 text-on-surface-variant";
+            }
+        }
+
+        function resetTimerUI(type, message) {
+            activeTimer = false;
+            document.getElementById("active-timer-widget").style.display = "none";
+            document.getElementById("global-timer-status").classList.add("hidden");
+            
+            if (message) {
+                // Flash success overlay or alert
+                alert(message);
+            }
+        }
+
+        // --- Tab Nav Switching ---
+        function switchTab(tabId) {
+            activeTab = tabId;
+            
+            // Tab buttons highlight
+            document.querySelectorAll(".tab-btn").forEach(btn => {
+                btn.className = "tab-btn text-on-surface-variant px-4 py-3 flex items-center gap-3 hover:bg-surface-variant transition-all text-left border-l-4 border-transparent";
+            });
+            
+            let activeBtn = document.getElementById(`tab-btn-${tabId}`);
+            if (activeBtn) {
+                activeBtn.className = "tab-btn bg-primary-container/20 text-primary border-l-4 border-primary px-4 py-3 flex items-center gap-3 transition-all text-left";
+            }
+            
+            // Show content
+            document.querySelectorAll(".tab-content").forEach(content => {
+                content.classList.remove("active");
+            });
+            document.getElementById(`tab-tasks`).style.display = 'none';
+            document.getElementById(`tab-meditate`).style.display = 'none';
+            document.getElementById(`tab-wisdom`).style.display = 'none';
+            document.getElementById(`tab-stats`).style.display = 'none';
+            
+            let activePanel = document.getElementById(`tab-${tabId}`);
+            if (activePanel) {
+                activePanel.classList.add("active");
+                activePanel.style.display = 'block';
+            }
+            
+            // Handle specific tab initializations
+            if (tabId === 'meditate') {
+                initSakuraBackground();
+            } else {
+                stopSakuraBackground();
+            }
+        }
+
+        // --- Theme Switcher (Dual Dashboard Swap) ---
+        function setDashboardTheme(theme) {
+            currentTheme = theme;
+            let wrapper = document.getElementById("dashboard-wrapper");
+            let hero = document.getElementById("app-hero-bg");
+            let indicator = document.getElementById("dashboard-indicator");
+            let colorOverlay = document.getElementById("theme-color-overlay");
+
+            document.getElementById("toggle-btn-dojo").className = "px-3 py-1 font-label-caps text-[10px] text-on-surface-variant hover:text-primary transition-all";
+            document.getElementById("toggle-btn-sumie").className = "px-3 py-1 font-label-caps text-[10px] text-on-surface-variant hover:text-primary transition-all";
+
+            if (theme === 'dojo') {
+                wrapper.className = "flex-1 flex flex-col min-w-0 dashboard-dojo";
+                hero.style.backgroundImage = "url('../../assets/bg_dojo.jpg')";
+                hero.style.opacity = "0.35"; // Full color, vibrant opacity
+                colorOverlay.className = "fixed inset-0 z-[-1] bg-primary-container/5 transition-colors duration-500";
+                indicator.textContent = "Dojo Mode";
+                document.getElementById("toggle-btn-dojo").className = "px-3 py-1 font-label-caps text-[10px] bg-primary text-surface-container-lowest transition-all";
+            } else {
+                wrapper.className = "flex-1 flex flex-col min-w-0 dashboard-sumie";
+                hero.style.backgroundImage = "url('../../assets/bg_sumie.jpg')";
+                hero.style.opacity = "0.45"; // Full color, vibrant opacity
+                colorOverlay.className = "fixed inset-0 z-[-1] bg-primary-container/10 transition-colors duration-500";
+                indicator.textContent = "Sumi-e Mode";
+                document.getElementById("toggle-btn-sumie").className = "px-3 py-1 font-label-caps text-[10px] bg-primary text-surface-container-lowest transition-all";
+            }
+        }
+
+        // --- Breathing Zen Mode Canvas & Animation ---
+        function initSakuraBackground() {
+            resizeCanvas();
+            particles = [];
+            for (let i = 0; i < 40; i++) {
+                particles.push(new SakuraParticle());
+            }
+            drawSakuraLoop();
+        }
+
+        function stopSakuraBackground() {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function resizeCanvas() {
+            if (canvas) {
+                canvas.width = canvas.parentElement.clientWidth;
+                canvas.height = canvas.parentElement.clientHeight;
+            }
+        }
+
+        class SakuraParticle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * -canvas.height;
+                this.size = Math.random() * 8 + 4;
+                this.speedX = Math.random() * 1.5 - 0.5;
+                this.speedY = Math.random() * 1.5 + 0.8;
+                this.rotation = Math.random() * 360;
+                this.rotationSpeed = Math.random() * 2 - 1;
+                this.opacity = Math.random() * 0.4 + 0.3;
+            }
+            update() {
+                this.x += this.speedX + Math.sin(this.y / 30) * 0.4;
+                this.y += this.speedY;
+                this.rotation += this.rotationSpeed;
+                if (this.y > canvas.height) {
+                    this.y = -20;
+                    this.x = Math.random() * canvas.width;
+                }
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate((this.rotation * Math.PI) / 180);
+                ctx.fillStyle = `rgba(255, 180, 168, ${this.opacity})`;
+                ctx.beginPath();
+                // Simple sakura petal geometry
+                ctx.moveTo(0, 0);
+                ctx.bezierCurveTo(-this.size, -this.size/2, -this.size, this.size/2, 0, this.size);
+                ctx.bezierCurveTo(this.size, this.size/2, this.size, -this.size/2, 0, 0);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function drawSakuraLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach((p) => {
+                p.update();
+                p.draw();
+            });
+            animationFrameId = requestAnimationFrame(drawSakuraLoop);
+        }
+
+        // Breathing Rhythm Control
+        function toggleBreathingZen() {
+            let ctrlBtn = document.getElementById("btn-breathing-control");
+            let instruction = document.getElementById("breathing-instruction");
+            let circle = document.getElementById("breathing-circle");
+            
+            if (isBreathingZenActive) {
+                // Stop breathing cycle
+                isBreathingZenActive = false;
+                clearInterval(breathingTimer);
+                instruction.textContent = "Zen";
+                circle.style.transform = "scale(1.0)";
+                circle.style.borderColor = "#ffb4a8";
+                ctrlBtn.textContent = "Begin Breathing Cycle";
+            } else {
+                // Start breathing cycle
+                isBreathingZenActive = true;
+                ctrlBtn.textContent = "Stop Breathing Cycle";
+                runBreathingCycle();
+                breathingTimer = setInterval(runBreathingCycle, 16000); // 16 seconds complete cycle
+            }
+        }
+        
+        function runBreathingCycle() {
+            if (!isBreathingZenActive) return;
+            let instruction = document.getElementById("breathing-instruction");
+            let circle = document.getElementById("breathing-circle");
+            
+            // Phase 1: Inhale (4s)
+            instruction.textContent = "Inhale";
+            instruction.className = "font-label-caps text-xs text-primary uppercase tracking-widest";
+            circle.style.transform = "scale(1.35)";
+            circle.style.borderColor = "#ffb4a8";
+            
+            // Phase 2: Hold (4s)
+            setTimeout(() => {
+                if (!isBreathingZenActive) return;
+                instruction.textContent = "Hold";
+                instruction.className = "font-label-caps text-xs text-secondary uppercase tracking-widest";
+                circle.style.borderColor = "#e1c28e";
+            }, 4000);
+            
+            // Phase 3: Exhale (4s)
+            setTimeout(() => {
+                if (!isBreathingZenActive) return;
+                instruction.textContent = "Exhale";
+                instruction.className = "font-label-caps text-xs text-primary uppercase tracking-widest";
+                circle.style.transform = "scale(0.85)";
+                circle.style.borderColor = "#ffb4a8";
+            }, 8000);
+            
+            // Phase 4: Hold (4s)
+            setTimeout(() => {
+                if (!isBreathingZenActive) return;
+                instruction.textContent = "Hold";
+                instruction.className = "font-label-caps text-xs text-secondary uppercase tracking-widest";
+                circle.style.transform = "scale(1.0)";
+                circle.style.borderColor = "#e1c28e";
+            }, 12000);
+        }
+
+        // --- Mock Sandbox Fallbacks (Browser Preview) ---
+        function loadMockData() {
+            let mockTasks = [
+                { id: "task_1", title: "Complete the Dojo UI implementation", completed: false, crossed: false },
+                { id: "task_2", title: "Sharpen the katana (Review PRs)", completed: true, crossed: false },
+                { id: "task_3", title: "Meditate on the architecture docs", completed: false, crossed: false }
+            ];
+            renderTasks(mockTasks);
+            
+            let mockStats = {
+                level: 14,
+                title: "Disciplined",
+                xp: 1400,
+                total_focus_mins: 350,
+                slashed_tasks: 1,
+                sessions_completed: 7
+            };
+            updateStatsUI(mockStats);
+            
+            let mockQuotes = [
+                { text: "The focused mind can pierce through stone.", author: "Way of the Ronin" },
+                { text: "Flow like water, strike like lightning, rest like a mountain.", author: "Bushido Wisdom" }
+            ];
+            renderWisdomLibrary(mockQuotes);
+
+            let mockSongs = [
+                { name: "Distant Lands - Kupla.mp3", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", title: "Distant Lands", artist: "Kupla" },
+                { name: "Eventide - brillion..mp3", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3", title: "Eventide", artist: "brillion." },
+                { name: "Hey Jerry - HM Surf.mp3", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3", title: "Hey Jerry", artist: "HM Surf" },
+                { name: "Microscopic - Kupla.mp3", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3", title: "Microscopic", artist: "Kupla" },
+                { name: "Off - kudo.mp3", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3", title: "Off", artist: "kudo" }
+            ];
+            initializeSpotify(mockSongs);
+        }
+
+        let mockTimerInterval = null;
+        function startMockTimer(minutes, type, name) {
+            clearInterval(mockTimerInterval);
+            totalSeconds = minutes * 60;
+            let secondsLeft = totalSeconds;
+            
+            activeTimer = true;
+            timerType = type;
+            
+            mockTimerInterval = setInterval(() => {
+                if (secondsLeft > 0 && activeTimer) {
+                    secondsLeft--;
+                    let mins = Math.floor(secondsLeft / 60);
+                    let secs = secondsLeft % 60;
+                    let timeStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                    updateTimerClock(secondsLeft, timeStr);
+                } else if (secondsLeft === 0) {
+                    clearInterval(mockTimerInterval);
+                    activeTimer = false;
+                    resetTimerUI(type, `${name} interval has ended.`);
+                }
+            }, 1000);
+        }
+
+        // --- Automatic Hourly Background Swap ---
+        // Rotates the theme background (Dojo vs Sumi-e) automatically every 1 hour (3600000ms)
+        setInterval(() => {
+            let nextTheme = currentTheme === 'dojo' ? 'sumie' : 'dojo';
+            setDashboardTheme(nextTheme);
+            console.log(`Hourly automatic background shift triggered. Set theme to: ${nextTheme}`);
+        }, 3600000);
+
+        // --- Premium Zen Mini Spotify Player Engine ---
+        let spotifySongs = [];
+        let currentSongIndex = 0;
+        let isPlaying = false;
+        let isShuffle = false;
+        let repeatMode = 'all'; // 'off', 'one', 'all'
+        let sharedAudio = new Audio();
+        let playlistCollapsed = false;
+
+        function initializeSpotify(songs) {
+            spotifySongs = songs;
+            if (!spotifySongs || spotifySongs.length === 0) {
+                document.querySelectorAll('.spotify-title').forEach(el => el.textContent = "No Songs Found");
+                document.querySelectorAll('.spotify-artist').forEach(el => el.textContent = "Place mp3s in /songs");
+                return;
+            }
+            
+            currentSongIndex = 0;
+            sharedAudio.src = spotifySongs[currentSongIndex].url;
+            sharedAudio.volume = 0.5;
+            
+            // Build the playlists in both players
+            renderPlaylists();
+            
+            // Sync initial state
+            syncSpotifyUI();
+            
+            // Event listeners
+            sharedAudio.addEventListener('timeupdate', () => {
+                if (!sharedAudio.duration) return;
+                const progressPercent = (sharedAudio.currentTime / sharedAudio.duration) * 100;
+                
+                // Update all timeline range sliders
+                document.querySelectorAll('.spotify-progress').forEach(slider => {
+                    slider.value = progressPercent;
+                });
+                
+                // Update time strings
+                const currentStr = formatTime(sharedAudio.currentTime);
+                const totalStr = formatTime(sharedAudio.duration);
+                document.querySelectorAll('.spotify-time-current').forEach(el => el.textContent = currentStr);
+                document.querySelectorAll('.spotify-time-total').forEach(el => el.textContent = totalStr);
+            });
+            
+            sharedAudio.addEventListener('ended', () => {
+                handleSongEnded();
+            });
+            
+            sharedAudio.addEventListener('loadedmetadata', () => {
+                const totalStr = formatTime(sharedAudio.duration);
+                document.querySelectorAll('.spotify-time-total').forEach(el => el.textContent = totalStr);
+            });
+        }
+
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return "00:00";
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function renderPlaylists() {
+            document.querySelectorAll('.spotify-playlist-container').forEach(container => {
+                container.innerHTML = "";
+                spotifySongs.forEach((song, index) => {
+                    const item = document.createElement('div');
+                    item.className = "spotify-song-item flex items-center justify-between p-2 hover:bg-primary/5 cursor-pointer text-xs border-l-2 border-l-transparent rounded-sm";
+                    item.setAttribute('onclick', `selectSpotifySong(${index})`);
+                    
+                    item.innerHTML = `
+                        <div class="flex items-center gap-2 overflow-hidden flex-1">
+                            <span class="song-indicator w-4 h-4 flex items-center justify-center font-label-caps text-[9px] text-on-surface-variant">${index + 1}</span>
+                            <div class="flex flex-col truncate">
+                                <span class="font-semibold text-on-surface truncate tracking-wide">${song.title}</span>
+                                <span class="font-label-caps text-[8px] text-on-surface-variant truncate uppercase mt-0.5">${song.artist}</span>
+                            </div>
+                        </div>
+                        <span class="material-symbols-outlined text-[14px] text-on-surface-variant opacity-0 hover:opacity-100 transition-opacity">play_circle</span>
+                    `;
+                    container.appendChild(item);
+                });
+            });
+        }
+
+        function syncSpotifyUI() {
+            const activeSong = spotifySongs[currentSongIndex];
+            if (!activeSong) return;
+            
+            // Update labels
+            document.querySelectorAll('.spotify-title').forEach(el => el.textContent = activeSong.title);
+            document.querySelectorAll('.spotify-artist').forEach(el => el.textContent = activeSong.artist);
+            
+            // Update Play/Pause icons
+            const iconName = isPlaying ? "pause" : "play_arrow";
+            document.querySelectorAll('.spotify-play-icon').forEach(el => el.textContent = iconName);
+            
+            // Update rotating crest disks
+            document.querySelectorAll('.spotify-disk').forEach(disk => {
+                disk.style.animationPlayState = isPlaying ? 'running' : 'paused';
+            });
+            
+            // Update Shuffle highlights
+            document.querySelectorAll('.spotify-shuffle-btn').forEach(btn => {
+                if (isShuffle) {
+                    btn.classList.add('text-primary');
+                    btn.classList.remove('text-on-surface-variant');
+                } else {
+                    btn.classList.remove('text-primary');
+                    btn.classList.add('text-on-surface-variant');
+                }
+            });
+            
+            // Update Repeat highlights and icons
+            document.querySelectorAll('.spotify-repeat-btn').forEach(btn => {
+                const iconEl = btn.querySelector('.material-symbols-outlined');
+                if (repeatMode === 'off') {
+                    btn.classList.remove('text-primary');
+                    btn.classList.add('text-on-surface-variant');
+                    if (iconEl) iconEl.textContent = 'repeat';
+                    btn.setAttribute('title', 'Repeat: Off');
+                } else if (repeatMode === 'one') {
+                    btn.classList.add('text-primary');
+                    btn.classList.remove('text-on-surface-variant');
+                    if (iconEl) iconEl.textContent = 'repeat_one';
+                    btn.setAttribute('title', 'Repeat: Single');
+                } else if (repeatMode === 'all') {
+                    btn.classList.add('text-primary');
+                    btn.classList.remove('text-on-surface-variant');
+                    if (iconEl) iconEl.textContent = 'repeat';
+                    btn.setAttribute('title', 'Repeat: Playlist');
+                }
+            });
+            
+            // Update highlight index in all playlist displays
+            document.querySelectorAll('.spotify-playlist-container').forEach(container => {
+                const items = container.querySelectorAll('.spotify-song-item');
+                items.forEach((item, index) => {
+                    const indicator = item.querySelector('.song-indicator');
+                    if (index === currentSongIndex) {
+                        item.classList.add('bg-primary/10', 'border-l-primary');
+                        item.classList.remove('border-l-transparent');
+                        if (indicator) {
+                            indicator.innerHTML = isPlaying ? 
+                                `<span class="material-symbols-outlined text-[13px] text-primary animate-pulse">graphic_eq</span>` : 
+                                `<span class="material-symbols-outlined text-[13px] text-primary">play_arrow</span>`;
+                        }
+                    } else {
+                        item.classList.remove('bg-primary/10', 'border-l-primary');
+                        item.classList.add('border-l-transparent');
+                        if (indicator) {
+                            indicator.innerHTML = `<span class="font-label-caps text-[9px] text-on-surface-variant">${index + 1}</span>`;
+                        }
+                    }
+                });
+            });
+            
+            // Sync volume sliders
+            document.querySelectorAll('.spotify-volume').forEach(slider => {
+                slider.value = sharedAudio.volume;
+            });
+        }
+
+        function toggleSpotifyPlay() {
+            if (spotifySongs.length === 0) return;
+            
+            if (isPlaying) {
+                sharedAudio.pause();
+                isPlaying = false;
+            } else {
+                sharedAudio.play().catch(err => console.log("Audio play deferred:", err));
+                isPlaying = true;
+            }
+            syncSpotifyUI();
+        }
+
+        function selectSpotifySong(index) {
+            if (index < 0 || index >= spotifySongs.length) return;
+            currentSongIndex = index;
+            
+            sharedAudio.src = spotifySongs[currentSongIndex].url;
+            sharedAudio.play().catch(err => console.log("Audio play deferred:", err));
+            isPlaying = true;
+            syncSpotifyUI();
+        }
+
+        function playNextSpotifySong() {
+            if (spotifySongs.length === 0) return;
+            
+            if (isShuffle) {
+                currentSongIndex = Math.floor(Math.random() * spotifySongs.length);
+            } else {
+                currentSongIndex = (currentSongIndex + 1) % spotifySongs.length;
+            }
+            
+            sharedAudio.src = spotifySongs[currentSongIndex].url;
+            sharedAudio.play().catch(err => console.log("Audio play deferred:", err));
+            isPlaying = true;
+            syncSpotifyUI();
+        }
+
+        function playPrevSpotifySong() {
+            if (spotifySongs.length === 0) return;
+            
+            if (isShuffle) {
+                currentSongIndex = Math.floor(Math.random() * spotifySongs.length);
+            } else {
+                currentSongIndex = (currentSongIndex - 1 + spotifySongs.length) % spotifySongs.length;
+            }
+            
+            sharedAudio.src = spotifySongs[currentSongIndex].url;
+            sharedAudio.play().catch(err => console.log("Audio play deferred:", err));
+            isPlaying = true;
+            syncSpotifyUI();
+        }
+
+        function toggleSpotifyShuffle() {
+            isShuffle = !isShuffle;
+            syncSpotifyUI();
+        }
+
+        function cycleSpotifyRepeat() {
+            if (repeatMode === 'off') {
+                repeatMode = 'all';
+            } else if (repeatMode === 'all') {
+                repeatMode = 'one';
+            } else {
+                repeatMode = 'off';
+            }
+            syncSpotifyUI();
+        }
+
+        function handleSongEnded() {
+            if (repeatMode === 'one') {
+                sharedAudio.currentTime = 0;
+                sharedAudio.play().catch(err => console.log("Audio play deferred:", err));
+            } else if (repeatMode === 'all') {
+                playNextSpotifySong();
+            } else {
+                if (currentSongIndex < spotifySongs.length - 1) {
+                    playNextSpotifySong();
+                } else {
+                    isPlaying = false;
+                    syncSpotifyUI();
+                }
+            }
+        }
+
+        function onSpotifyProgressInput(slider) {
+            if (!sharedAudio.duration) return;
+            const targetTime = (parseFloat(slider.value) / 100) * sharedAudio.duration;
+            sharedAudio.currentTime = targetTime;
+            
+            // Drag-sync all active sliders
+            document.querySelectorAll('.spotify-progress').forEach(s => {
+                s.value = slider.value;
+            });
+        }
+
+        function changeSpotifyVolume(slider) {
+            sharedAudio.volume = parseFloat(slider.value);
+            // Sync both sliders
+            document.querySelectorAll('.spotify-volume').forEach(s => {
+                s.value = slider.value;
+            });
+        }
+
+        function togglePlaylistCollapse(btn) {
+            playlistCollapsed = !playlistCollapsed;
+            document.querySelectorAll('.spotify-playlist').forEach(pl => {
+                pl.style.display = playlistCollapsed ? 'none' : 'flex';
+            });
+            document.querySelectorAll('.spotify-player-card').forEach(card => {
+                const icon = card.querySelector('.material-symbols-outlined[onclick*="togglePlaylistCollapse"]');
+                if (icon) {
+                    icon.textContent = playlistCollapsed ? 'expand_more' : 'expand_less';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
