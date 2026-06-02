@@ -120,6 +120,14 @@ class Database:
                 return task
         return None
 
+    def update_task_title(self, task_id, new_title):
+        for task in self.data["tasks"]:
+            if task["id"] == task_id:
+                task["title"] = new_title.strip()
+                self.save()
+                return task
+        return None
+
     def delete_task(self, task_id):
         initial_len = len(self.data["tasks"])
         self.data["tasks"] = [t for t in self.data["tasks"] if t["id"] != task_id]

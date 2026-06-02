@@ -7,6 +7,7 @@ class WebBridge(QObject):
     taskAdded = pyqtSignal(str)      # JSON string
     taskToggled = pyqtSignal(str)    # JSON string
     taskDeleted = pyqtSignal(str)    # task_id string
+    taskUpdated = pyqtSignal(str)    # JSON string
     timerTicked = pyqtSignal(int, str, str) # remaining_seconds, mm:ss string, timer_type
     timerCompleted = pyqtSignal(str, str) # type ("focus"/"break"), msg string
     timerPaused = pyqtSignal()
@@ -112,6 +113,15 @@ class WebBridge(QObject):
             self.statsUpdated.emit(json.dumps(self.db.get_stats()))
             return True
         return False
+
+    @pyqtSlot(str, str, result=str)
+    def editTask(self, task_id, new_title):
+        task = self.db.update_task_title(task_id, new_title)
+        if task:
+            task_json = json.dumps(task)
+            self.taskUpdated.emit(task_json)
+            return task_json
+        return ""
 
     @pyqtSlot(str, str, result=str)
     def addQuote(self, text, author):
