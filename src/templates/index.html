@@ -941,6 +941,16 @@
                         resetTimerUI(type, message);
                     });
                     
+                    bridge.timerPaused.connect(() => {
+                        activeTimer = false;
+                        updatePauseResumeUI();
+                    });
+                    
+                    bridge.timerResumed.connect(() => {
+                        activeTimer = true;
+                        updatePauseResumeUI();
+                    });
+                    
                     bridge.statsUpdated.connect((statsJson) => {
                         updateStatsUI(JSON.parse(statsJson));
                     });
@@ -1287,23 +1297,34 @@
             startPresetTimer(mins, 'focus', 'Custom Ritual');
         }
         
-        function pauseTimer() {
-            activeTimer = false;
-            if (bridge) {
-                bridge.pauseTimer();
+        function updatePauseResumeUI() {
+            let active = activeTimer;
+            if (active) {
+                document.getElementById("btn-pause").classList.remove("hidden");
+                document.getElementById("btn-resume").classList.add("hidden");
+                document.getElementById("active-timer-badge").textContent = "Active";
+                document.getElementById("active-timer-badge").className = "font-label-caps text-xs bg-primary-container border border-primary/40 px-2 py-0.5 text-primary";
             } else {
                 document.getElementById("btn-pause").classList.add("hidden");
                 document.getElementById("btn-resume").classList.remove("hidden");
+                document.getElementById("active-timer-badge").textContent = "Paused";
+                document.getElementById("active-timer-badge").className = "font-label-caps text-xs bg-surface-container-highest border border-outline/40 px-2 py-0.5 text-on-surface-variant";
+            }
+        }
+
+        function pauseTimer() {
+            activeTimer = false;
+            updatePauseResumeUI();
+            if (bridge) {
+                bridge.pauseTimer();
             }
         }
 
         function resumeTimer() {
             activeTimer = true;
+            updatePauseResumeUI();
             if (bridge) {
                 bridge.resumeTimer();
-            } else {
-                document.getElementById("btn-pause").classList.remove("hidden");
-                document.getElementById("btn-resume").classList.add("hidden");
             }
         }
         
@@ -1312,7 +1333,14 @@
             if (bridge) {
                 bridge.cancelTimer();
             } else {
-                resetTimerUI();
+                clearInterval(mockTimerInterval);
+                let total = totalSeconds;
+                let mins = Math.floor(total / 60);
+                let secs = total % 60;
+                let timeStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                updateTimerClock(total, timeStr);
+                activeTimer = false;
+                updatePauseResumeUI();
             }
         }
 
@@ -1337,18 +1365,7 @@
             document.getElementById("active-timer-title").textContent = label;
             document.getElementById("active-timer-preset").textContent = `Preset: ${bridge ? bridge.timer_active_name : 'Zen'}`;
             
-            let active = activeTimer;
-            if (active) {
-                document.getElementById("btn-pause").classList.remove("hidden");
-                document.getElementById("btn-resume").classList.add("hidden");
-                document.getElementById("active-timer-badge").textContent = "Active";
-                document.getElementById("active-timer-badge").className = "font-label-caps text-xs bg-primary-container border border-primary/40 px-2 py-0.5 text-primary";
-            } else {
-                document.getElementById("btn-pause").classList.add("hidden");
-                document.getElementById("btn-resume").classList.remove("hidden");
-                document.getElementById("active-timer-badge").textContent = "Paused";
-                document.getElementById("active-timer-badge").className = "font-label-caps text-xs bg-surface-container-highest border border-outline/40 px-2 py-0.5 text-on-surface-variant";
-            }
+            updatePauseResumeUI();
         }
 
         function resetTimerUI(type, message) {
@@ -1356,8 +1373,8 @@
             document.getElementById("active-timer-widget").style.display = "none";
             document.getElementById("global-timer-status").classList.add("hidden");
             
-            if (message) {
-                // Flash success overlay or alert
+            if (message && !bridge) {
+                // Flash success overlay or alert in mock mode only
                 alert(message);
             }
         }
