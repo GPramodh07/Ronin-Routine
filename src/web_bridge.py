@@ -9,6 +9,8 @@ class WebBridge(QObject):
     taskDeleted = pyqtSignal(str)    # task_id string
     timerTicked = pyqtSignal(int, str, str) # remaining_seconds, mm:ss string, timer_type
     timerCompleted = pyqtSignal(str, str) # type ("focus"/"break"), msg string
+    timerPaused = pyqtSignal()
+    timerResumed = pyqtSignal()
     statsUpdated = pyqtSignal(str)   # JSON string
     quotesUpdated = pyqtSignal(str)  # JSON string
 
@@ -141,32 +143,25 @@ class WebBridge(QObject):
         
         self._emit_timer_state()
         self.timer.start(1000) # Tick every second
-        
-        type_lbl = "Focus Session" if timer_type == "focus" else "Break Time"
-        if self.show_notification:
-            self.show_notification(f"Ritual Commenced", f"You have entered a {minutes}-minute {type_lbl}.")
 
     @pyqtSlot()
     def pauseTimer(self):
         if self.timer.isActive():
             self.timer.stop()
-            if self.show_notification:
-                self.show_notification("Ritual Paused", "Your focus interval has been paused.")
+            self.timerPaused.emit()
 
     @pyqtSlot()
     def resumeTimer(self):
         if not self.timer.isActive() and self.timer_seconds_remaining > 0:
             self.timer.start(1000)
-            if self.show_notification:
-                self.show_notification("Ritual Resumed", "Your focus interval has been resumed.")
+            self.timerResumed.emit()
 
     @pyqtSlot()
     def cancelTimer(self):
         self.timer.stop()
-        self.timer_seconds_remaining = 0
+        self.timer_seconds_remaining = self.timer_total_seconds
         self._emit_timer_state()
-        if self.show_notification:
-            self.show_notification("Ritual Abandoned", "The timer has been reset.")
+        self.timerPaused.emit()
 
     # --- Internal Timer Tick ---
     def _on_timer_tick(self):
