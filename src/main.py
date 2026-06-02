@@ -111,7 +111,7 @@ class MainWindow(QMainWindow):
         """Triggers system notification via notifier."""
         self.notifier.send(title, message, tray_icon=self.tray_icon)
 
-    def update_tray_timer_state(self, seconds_remaining, time_str):
+    def update_tray_timer_state(self, seconds_remaining, time_str, timer_type=None):
         """Update System Tray Tooltip and pause/resume enablement actions."""
         active = self.bridge.timer.isActive()
         if seconds_remaining > 0:
