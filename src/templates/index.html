@@ -156,6 +156,14 @@
             transition: all 0.3s ease;
         }
 
+        /* Task Editing styling */
+        .editing .task-view-mode {
+            display: none !important;
+        }
+        .editing .task-edit-mode {
+            display: flex !important;
+        }
+
         /* Parchment texture simulation */
         .bg-parchment {
             background-color: theme('colors.surface-container-lowest');
@@ -930,6 +938,18 @@
                         updateQuestProgress();
                     });
                     
+                    bridge.taskUpdated.connect((taskJson) => {
+                        let task = JSON.parse(taskJson);
+                        allQuests = allQuests.map(q => q.id === task.id ? task : q);
+                        
+                        let elem = document.querySelector(`[data-id="${task.id}"]`);
+                        if (elem) {
+                            elem.classList.remove("editing");
+                            updateTaskElement(task);
+                        }
+                        updateQuestProgress();
+                    });
+                    
                     bridge.timerTicked.connect((secondsLeft, timeStr, type) => {
                         if (type) {
                             timerType = type;
@@ -1064,6 +1084,29 @@
                 updateQuestProgress();
             }
         }
+        
+        function handleEditTask(taskId, newTitle) {
+            newTitle = newTitle.trim();
+            if (!newTitle) return;
+            
+            if (bridge) {
+                bridge.editTask(taskId, newTitle);
+            } else {
+                // Mock
+                let existingTask = allQuests.find(q => q.id === taskId);
+                let mockTask = {
+                    ...existingTask,
+                    title: newTitle
+                };
+                allQuests = allQuests.map(q => q.id === taskId ? mockTask : q);
+                let elem = document.querySelector(`[data-id="${taskId}"]`);
+                if (elem) {
+                    elem.classList.remove("editing");
+                    updateTaskElement(mockTask);
+                }
+                updateQuestProgress();
+            }
+        }
 
         function updateQuestProgress() {
             let total = allQuests.length;
@@ -1133,7 +1176,7 @@
             
             let taskDiv = document.createElement("div");
             taskDiv.setAttribute("data-id", task.id);
-            taskDiv.className = "group flex items-start gap-4 p-3 border border-transparent hover:border-outline/40 transition-all bg-surface-container-low/60";
+            taskDiv.className = "group flex flex-col p-3 border border-transparent hover:border-outline/40 transition-all bg-surface-container-low/60";
             
             let isCrossed = task.crossed || false;
             let tickActive = task.completed ? "tick-completed" : "";
@@ -1144,25 +1187,47 @@
             if (isCrossed) textClass = "task-crossed-text";
             
             taskDiv.innerHTML = `
-                <div class="flex items-center gap-1.5 mt-0.5 flex-shrink-0">
-                    <!-- Tick/Slash Button -->
-                    <button title="Slash Quest (Complete)" class="katana-action-btn tick-btn ${tickActive}">
-                        <span class="material-symbols-outlined text-[12px] text-primary">done</span>
-                    </button>
-                    <!-- Cross Button -->
-                    <button title="Cross Quest (Fail/Cancel)" class="katana-action-btn cross-btn ${crossActive}">
-                        <span class="material-symbols-outlined text-[12px] text-red-500">close</span>
-                    </button>
+                <!-- View Mode -->
+                <div class="task-view-mode flex items-start gap-4 w-full">
+                    <div class="flex items-center gap-1.5 mt-0.5 flex-shrink-0">
+                        <!-- Tick/Slash Button -->
+                        <button title="Slash Quest (Complete)" class="katana-action-btn tick-btn ${tickActive}">
+                            <span class="material-symbols-outlined text-[12px] text-primary">done</span>
+                        </button>
+                        <!-- Cross Button -->
+                        <button title="Cross Quest (Fail/Cancel)" class="katana-action-btn cross-btn ${crossActive}">
+                            <span class="material-symbols-outlined text-[12px] text-red-500">close</span>
+                        </button>
+                    </div>
+                    <span class="font-body-lg text-sm flex-1 task-title ${textClass}">${task.title}</span>
+                    <div class="flex items-center gap-1 ml-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all">
+                        <button aria-label="Edit quest" class="edit-btn text-outline-variant hover:text-primary transition-colors flex items-center justify-center p-0.5 mt-0.5">
+                            <span class="material-symbols-outlined text-lg">edit</span>
+                        </button>
+                        <button aria-label="Delete quest" class="delete-btn text-outline-variant hover:text-red-500 transition-colors flex items-center justify-center p-0.5 mt-0.5">
+                            <span class="material-symbols-outlined text-lg">close</span>
+                        </button>
+                    </div>
                 </div>
-                <span class="font-body-lg text-sm flex-1 task-title ${textClass}">${task.title}</span>
-                <button aria-label="Delete quest" class="delete-btn text-outline-variant hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 flex items-center justify-center p-0.5 ml-2 mt-0.5">
-                    <span class="material-symbols-outlined text-lg">close</span>
-                </button>
+
+                <!-- Edit Mode -->
+                <div class="task-edit-mode hidden items-center gap-2 w-full">
+                    <input type="text" class="edit-input flex-1 bg-surface-container-low border border-outline/40 px-2 py-1.5 font-body-lg text-sm text-on-surface focus:outline-none focus:border-primary transition-colors" value="${task.title.replace(/"/g, '&quot;')}">
+                    <div class="flex items-center gap-1.5 flex-shrink-0">
+                        <button title="Save Quest (Enter)" class="save-edit-btn katana-action-btn border-primary bg-primary-container/20">
+                            <span class="material-symbols-outlined text-[12px] text-primary">done</span>
+                        </button>
+                        <button title="Cancel Edit (Esc)" class="cancel-edit-btn katana-action-btn border-outline-variant">
+                            <span class="material-symbols-outlined text-[12px] text-on-surface/60">close</span>
+                        </button>
+                    </div>
+                </div>
             `;
             
-            // Bind events
+            // Bind view-mode events
             let tickBtn = taskDiv.querySelector(".tick-btn");
             let crossBtn = taskDiv.querySelector(".cross-btn");
+            let deleteBtn = taskDiv.querySelector(".delete-btn");
             
             tickBtn.addEventListener("click", () => {
                 let isCompleted = !tickBtn.classList.contains("tick-completed");
@@ -1174,9 +1239,52 @@
                 handleToggleTask(task.id, false, isCrossed);
             });
             
-            let deleteBtn = taskDiv.querySelector(".delete-btn");
             deleteBtn.addEventListener("click", () => {
                 handleDeleteTask(task.id);
+            });
+
+            // Bind edit-mode events
+            let editBtn = taskDiv.querySelector(".edit-btn");
+            let saveEditBtn = taskDiv.querySelector(".save-edit-btn");
+            let cancelEditBtn = taskDiv.querySelector(".cancel-edit-btn");
+            let editInput = taskDiv.querySelector(".edit-input");
+            
+            editBtn.addEventListener("click", () => {
+                // Pre-fill input value to make sure it matches current text span
+                let currentText = taskDiv.querySelector(".task-title").textContent;
+                editInput.value = currentText;
+                
+                taskDiv.classList.add("editing");
+                setTimeout(() => {
+                    editInput.focus();
+                    editInput.select();
+                }, 50);
+            });
+            
+            cancelEditBtn.addEventListener("click", () => {
+                taskDiv.classList.remove("editing");
+                let originalTitle = allQuests.find(q => q.id === task.id)?.title || task.title;
+                editInput.value = originalTitle;
+            });
+            
+            saveEditBtn.addEventListener("click", () => {
+                let newTitle = editInput.value.trim();
+                if (newTitle) {
+                    handleEditTask(task.id, newTitle);
+                }
+            });
+            
+            editInput.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") {
+                    let newTitle = editInput.value.trim();
+                    if (newTitle) {
+                        handleEditTask(task.id, newTitle);
+                    }
+                } else if (e.key === "Escape") {
+                    taskDiv.classList.remove("editing");
+                    let originalTitle = allQuests.find(q => q.id === task.id)?.title || task.title;
+                    editInput.value = originalTitle;
+                }
             });
 
             container.appendChild(taskDiv);
@@ -1189,21 +1297,30 @@
             let tickBtn = elem.querySelector(".tick-btn");
             let crossBtn = elem.querySelector(".cross-btn");
             let textSpan = elem.querySelector(".task-title");
+            let editInput = elem.querySelector(".edit-input");
             
             let isCrossed = task.crossed || false;
             
+            // Update title text and input value
+            if (textSpan) {
+                textSpan.textContent = task.title;
+            }
+            if (editInput) {
+                editInput.value = task.title;
+            }
+            
             // Reset button states
-            tickBtn.className = "katana-action-btn tick-btn";
-            crossBtn.className = "katana-action-btn cross-btn";
+            if (tickBtn) tickBtn.className = "katana-action-btn tick-btn";
+            if (crossBtn) crossBtn.className = "katana-action-btn cross-btn";
             
             if (task.completed) {
-                tickBtn.classList.add("tick-completed");
-                textSpan.className = "font-body-lg text-sm flex-1 task-title task-completed-text";
+                if (tickBtn) tickBtn.classList.add("tick-completed");
+                if (textSpan) textSpan.className = "font-body-lg text-sm flex-1 task-title task-completed-text";
             } else if (isCrossed) {
-                crossBtn.classList.add("cross-completed");
-                textSpan.className = "font-body-lg text-sm flex-1 task-title task-crossed-text";
+                if (crossBtn) crossBtn.classList.add("cross-completed");
+                if (textSpan) textSpan.className = "font-body-lg text-sm flex-1 task-title task-crossed-text";
             } else {
-                textSpan.className = "font-body-lg text-sm flex-1 task-title text-on-surface";
+                if (textSpan) textSpan.className = "font-body-lg text-sm flex-1 task-title text-on-surface";
             }
         }
         
