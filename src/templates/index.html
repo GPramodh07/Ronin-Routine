@@ -930,7 +930,10 @@
                         updateQuestProgress();
                     });
                     
-                    bridge.timerTicked.connect((secondsLeft, timeStr) => {
+                    bridge.timerTicked.connect((secondsLeft, timeStr, type) => {
+                        if (type) {
+                            timerType = type;
+                        }
                         updateTimerClock(secondsLeft, timeStr);
                     });
                     
@@ -1592,6 +1595,14 @@
         let mockTimerInterval = null;
         function startMockTimer(minutes, type, name) {
             clearInterval(mockTimerInterval);
+            
+            // Handle split presets override
+            if (name === "Short Rest" && type === "focus") {
+                minutes = 25;
+            } else if (name === "Long Rest" && type === "focus") {
+                minutes = 50;
+            }
+            
             totalSeconds = minutes * 60;
             let secondsLeft = totalSeconds;
             
@@ -1608,7 +1619,16 @@
                 } else if (secondsLeft === 0) {
                     clearInterval(mockTimerInterval);
                     activeTimer = false;
-                    resetTimerUI(type, `${name} interval has ended.`);
+                    
+                    if (type === "focus" && name === "Short Rest") {
+                        alert("Time to Break: Focus interval completed! Time to take a 5-minute break.");
+                        startMockTimer(5, "break", "Short Rest");
+                    } else if (type === "focus" && name === "Long Rest") {
+                        alert("Time to Break: Focus interval completed! Time to take a 10-minute break.");
+                        startMockTimer(10, "break", "Long Rest");
+                    } else {
+                        resetTimerUI(type, `${name} interval has ended.`);
+                    }
                 }
             }, 1000);
         }

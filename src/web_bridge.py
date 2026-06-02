@@ -7,7 +7,7 @@ class WebBridge(QObject):
     taskAdded = pyqtSignal(str)      # JSON string
     taskToggled = pyqtSignal(str)    # JSON string
     taskDeleted = pyqtSignal(str)    # task_id string
-    timerTicked = pyqtSignal(int, str) # remaining_seconds, mm:ss string
+    timerTicked = pyqtSignal(int, str, str) # remaining_seconds, mm:ss string, timer_type
     timerCompleted = pyqtSignal(str, str) # type ("focus"/"break"), msg string
     statsUpdated = pyqtSignal(str)   # JSON string
     quotesUpdated = pyqtSignal(str)  # JSON string
@@ -129,6 +129,13 @@ class WebBridge(QObject):
         self.timer.stop()
         self.timer_type = timer_type
         self.timer_active_name = name
+        
+        # Override initial focus durations for split presets
+        if name == "Short Rest" and timer_type == "focus":
+            minutes = 25
+        elif name == "Long Rest" and timer_type == "focus":
+            minutes = 50
+            
         self.timer_total_seconds = minutes * 60
         self.timer_seconds_remaining = self.timer_total_seconds
         
@@ -175,10 +182,42 @@ class WebBridge(QObject):
         mins = self.timer_seconds_remaining // 60
         secs = self.timer_seconds_remaining % 60
         time_str = f"{mins:02d}:{secs:02d}"
-        self.timerTicked.emit(self.timer_seconds_remaining, time_str)
+        self.timerTicked.emit(self.timer_seconds_remaining, time_str, self.timer_type)
 
     def _on_timer_completed(self):
-        # 1. Update DB stats
+        # 1. Check if it's a transition from focus to break for split presets
+        if self.timer_type == "focus":
+            if self.timer_active_name == "Short Rest":
+                # Record 25 mins focus in DB
+                self.db.record_focus_session(25)
+                self.statsUpdated.emit(json.dumps(self.db.get_stats()))
+                
+                # Notify & Chime
+                if self.play_chime:
+                    self.play_chime()
+                if self.show_notification:
+                    self.show_notification("Time to Break", "Focus interval completed! Time to take a 5-minute break.")
+                
+                # Auto transition to break timer
+                self.startTimer(5, "break", "Short Rest")
+                return
+                
+            elif self.timer_active_name == "Long Rest":
+                # Record 50 mins focus in DB
+                self.db.record_focus_session(50)
+                self.statsUpdated.emit(json.dumps(self.db.get_stats()))
+                
+                # Notify & Chime
+                if self.play_chime:
+                    self.play_chime()
+                if self.show_notification:
+                    self.show_notification("Time to Break", "Focus interval completed! Time to take a 10-minute break.")
+                
+                # Auto transition to break timer
+                self.startTimer(10, "break", "Long Rest")
+                return
+
+        # 2. Normal completion (non-split custom/artisan timers or break timers)
         if self.timer_type == "focus":
             focus_mins = self.timer_total_seconds // 60
             self.db.record_focus_session(focus_mins)
@@ -189,13 +228,13 @@ class WebBridge(QObject):
             msg = "Break completed! Prepare your mind for the next strike."
             title = "Break Complete"
 
-        # 2. Play Zen Sound Chime
+        # Play Zen Sound Chime
         if self.play_chime:
             self.play_chime()
 
-        # 3. Trigger Notification
+        # Trigger Notification
         if self.show_notification:
             self.show_notification(title, msg)
 
-        # 4. Emit Completed Signal to JS
+        # Emit Completed Signal to JS
         self.timerCompleted.emit(self.timer_type, msg)
