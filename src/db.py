@@ -49,7 +49,8 @@ class Database:
                 {"text": "Flow like water, strike like lightning, rest like a mountain.", "author": "Bushido Wisdom"},
                 {"text": "Simplicity is the ultimate sophistication of the warrior.", "author": "Miyamoto Musashi"},
                 {"text": "Do nothing that is of no use.", "author": "Miyamoto Musashi"}
-            ]
+            ],
+            "focus_sessions": []
         }
         self.load()
 
@@ -59,12 +60,17 @@ class Database:
                 with open(self.db_path, "r", encoding="utf-8") as f:
                     loaded_data = json.load(f)
                     # Merge loaded data with defaults to ensure schema consistency
+                    modified = False
                     for key in self.data:
                         if key in loaded_data:
                             if isinstance(self.data[key], dict) and isinstance(loaded_data[key], dict):
                                 self.data[key].update(loaded_data[key])
                             else:
                                 self.data[key] = loaded_data[key]
+                        else:
+                            modified = True
+                    if modified:
+                        self.save()
             except Exception as e:
                 print(f"Error loading database, resetting to defaults: {e}")
                 self.save()
@@ -164,10 +170,20 @@ class Database:
         stats["sessions_completed"] += 1
         # Award 25 XP per focus session completed!
         self.add_xp(25)
+        
+        # Record session history
+        if "focus_sessions" not in self.data:
+            self.data["focus_sessions"] = []
+        self.data["focus_sessions"].append({
+            "mins": mins,
+            "completed_at": datetime.now().isoformat()
+        })
         self.save()
 
     def get_stats(self):
-        return self.data["stats"]
+        stats = self.data["stats"].copy()
+        stats["focus_sessions"] = self.data.get("focus_sessions", [])
+        return stats
 
     # --- Timer Presets ---
     def get_presets(self):

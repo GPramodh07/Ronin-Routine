@@ -790,29 +790,49 @@
             <!-- SECTION 4: HONOR STATS TAB -->
             <div id="tab-stats" class="tab-content">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter mb-6">
+                    <!-- Accumulated XP -->
                     <div class="card-container bg-surface-container p-6 ink-border flex flex-col gap-2 relative overflow-hidden">
                         <span class="material-symbols-outlined absolute right-4 top-4 text-primary text-4xl opacity-10">bolt</span>
                         <span class="font-label-caps text-[10px] text-on-surface-variant">Accumulated XP</span>
                         <div class="text-3xl font-headline-md text-primary" id="stat-xp">1,400</div>
                         <span class="font-label-caps text-[9px] text-on-surface-variant/80" id="stat-xp-details">100 XP to next level</span>
+                        <div class="flex justify-between items-center border-t border-outline/20 pt-2 mt-2">
+                            <span class="font-label-caps text-[9px] text-on-surface-variant/70">Today's XP</span>
+                            <span class="font-label-caps text-xs text-primary font-bold" id="stat-xp-today">0 XP</span>
+                        </div>
                     </div>
+                    <!-- Hours of Deep Focus -->
                     <div class="card-container bg-surface-container p-6 ink-border flex flex-col gap-2 relative overflow-hidden">
                         <span class="material-symbols-outlined absolute right-4 top-4 text-primary text-4xl opacity-10">timer</span>
                         <span class="font-label-caps text-[10px] text-on-surface-variant">Hours of Deep Focus</span>
                         <div class="text-3xl font-headline-md text-primary" id="stat-focus-hours">5.8<span class="text-sm">h</span></div>
                         <span class="font-label-caps text-[9px] text-on-surface-variant/80" id="stat-focus-mins">350 focus minutes</span>
+                        <div class="flex justify-between items-center border-t border-outline/20 pt-2 mt-2">
+                            <span class="font-label-caps text-[9px] text-on-surface-variant/70">Today's Focus</span>
+                            <span class="font-label-caps text-xs text-primary font-bold" id="stat-focus-today">0 mins</span>
+                        </div>
                     </div>
+                    <!-- Quests Slashed -->
                     <div class="card-container bg-surface-container p-6 ink-border flex flex-col gap-2 relative overflow-hidden">
                         <span class="material-symbols-outlined absolute right-4 top-4 text-primary text-4xl opacity-10">done_all</span>
                         <span class="font-label-caps text-[10px] text-on-surface-variant">Quests Slashed</span>
                         <div class="text-3xl font-headline-md text-primary" id="stat-tasks">1</div>
                         <span class="font-label-caps text-[9px] text-on-surface-variant/80">Completed items</span>
+                        <div class="flex justify-between items-center border-t border-outline/20 pt-2 mt-2">
+                            <span class="font-label-caps text-[9px] text-on-surface-variant/70">Today's Slashed</span>
+                            <span class="font-label-caps text-xs text-primary font-bold" id="stat-tasks-today">0 slashed</span>
+                        </div>
                     </div>
+                    <!-- Rituals Celebrated -->
                     <div class="card-container bg-surface-container p-6 ink-border flex flex-col gap-2 relative overflow-hidden">
                         <span class="material-symbols-outlined absolute right-4 top-4 text-primary text-4xl opacity-10">workspace_premium</span>
                         <span class="font-label-caps text-[10px] text-on-surface-variant">Rituals Celebrated</span>
                         <div class="text-3xl font-headline-md text-primary" id="stat-sessions">7</div>
                         <span class="font-label-caps text-[9px] text-on-surface-variant/80">Pomodoros finished</span>
+                        <div class="flex justify-between items-center border-t border-outline/20 pt-2 mt-2">
+                            <span class="font-label-caps text-[9px] text-on-surface-variant/70">Today's Rituals</span>
+                            <span class="font-label-caps text-xs text-primary font-bold" id="stat-sessions-today">0 finished</span>
+                        </div>
                     </div>
                 </div>
 
@@ -902,6 +922,7 @@
         let activeTimer = false;
         let timerType = 'focus';
         let totalSeconds = 0;
+        let activePresetName = 'Zen';
 
         // Sakura particle background
         let canvas = document.getElementById("sakura-canvas");
@@ -950,10 +971,10 @@
                         updateQuestProgress();
                     });
                     
-                    bridge.timerTicked.connect((secondsLeft, timeStr, type) => {
-                        if (type) {
-                            timerType = type;
-                        }
+                    bridge.timerTicked.connect((secondsLeft, totalSecs, timeStr, type, name) => {
+                        if (type) timerType = type;
+                        if (totalSecs) totalSeconds = totalSecs;
+                        if (name) activePresetName = name;
                         updateTimerClock(secondsLeft, timeStr);
                     });
                     
@@ -1357,7 +1378,7 @@
             let neededXpInThisLvl = stats.xp - currentLvlBaseXp;
             let percentLvlXp = Math.min(100, Math.max(0, (neededXpInThisLvl / 100) * 100));
             
-            // Stats Panel
+            // Stats Panel (Lifetime)
             document.getElementById("stat-xp").textContent = stats.xp.toLocaleString();
             document.getElementById("stat-xp-details").textContent = `${100 - neededXpInThisLvl} XP to Level ${stats.level + 1}`;
             
@@ -1367,6 +1388,41 @@
             
             document.getElementById("stat-tasks").textContent = stats.slashed_tasks;
             document.getElementById("stat-sessions").textContent = stats.sessions_completed;
+            
+            // Calculate Today's Stats
+            let todayFocusSessions = 0;
+            let todayFocusMins = 0;
+            if (stats.focus_sessions && Array.isArray(stats.focus_sessions)) {
+                stats.focus_sessions.forEach(session => {
+                    if (session.completed_at) {
+                        let compDate = new Date(session.completed_at);
+                        let today = new Date();
+                        if (compDate.toDateString() === today.toDateString()) {
+                            todayFocusSessions++;
+                            todayFocusMins += session.mins;
+                        }
+                    }
+                });
+            }
+
+            let todayQuestsSlashed = 0;
+            allQuests.forEach(task => {
+                if (task.completed && task.completed_at) {
+                    let compDate = new Date(task.completed_at);
+                    let today = new Date();
+                    if (compDate.toDateString() === today.toDateString()) {
+                        todayQuestsSlashed++;
+                    }
+                }
+            });
+
+            let todayXp = (todayQuestsSlashed * 10) + (todayFocusSessions * 25);
+
+            // Populate Today's Stats Panel
+            document.getElementById("stat-xp-today").textContent = `+${todayXp} XP`;
+            document.getElementById("stat-focus-today").textContent = `${todayFocusMins} mins`;
+            document.getElementById("stat-tasks-today").textContent = `${todayQuestsSlashed} slashed`;
+            document.getElementById("stat-sessions-today").textContent = `${todayFocusSessions} finished`;
             
             // Side bar progress
             document.getElementById("sidebar-xp-bar").style.width = `${percentLvlXp}%`;
@@ -1488,17 +1544,17 @@
             let globalTimer = document.getElementById("global-timer-status");
             globalTimer.classList.remove("hidden");
             
-            let timerlbl = (bridge ? bridge.timer_type : timerType) === "focus" ? "Focusing" : "Resting";
+            let timerlbl = timerType === "focus" ? "Focusing" : "Resting";
             document.getElementById("global-timer-text").textContent = `${timerlbl}: ${timeStr}`;
 
             // Calculate percentage
-            let total = bridge ? bridge.timer_total_seconds : totalSeconds;
+            let total = totalSeconds;
             let percent = total > 0 ? (secondsLeft / total) * 100 : 0;
             document.getElementById("active-timer-progress").style.width = `${percent}%`;
             
-            let label = (bridge ? bridge.timer_type : timerType) === "focus" ? "Focus Ritual" : "Mindful Rest";
+            let label = timerType === "focus" ? "Focus Ritual" : "Mindful Rest";
             document.getElementById("active-timer-title").textContent = label;
-            document.getElementById("active-timer-preset").textContent = `Preset: ${bridge ? bridge.timer_active_name : 'Zen'}`;
+            document.getElementById("active-timer-preset").textContent = `Preset: ${activePresetName}`;
             
             updatePauseResumeUI();
         }
@@ -1724,7 +1780,8 @@
                 xp: 1400,
                 total_focus_mins: 350,
                 slashed_tasks: 1,
-                sessions_completed: 7
+                sessions_completed: 7,
+                focus_sessions: []
             };
             updateStatsUI(mockStats);
             
@@ -1760,6 +1817,7 @@
             
             activeTimer = true;
             timerType = type;
+            activePresetName = name;
             
             mockTimerInterval = setInterval(() => {
                 if (secondsLeft > 0 && activeTimer) {

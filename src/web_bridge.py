@@ -8,7 +8,7 @@ class WebBridge(QObject):
     taskToggled = pyqtSignal(str)    # JSON string
     taskDeleted = pyqtSignal(str)    # task_id string
     taskUpdated = pyqtSignal(str)    # JSON string
-    timerTicked = pyqtSignal(int, str, str) # remaining_seconds, mm:ss string, timer_type
+    timerTicked = pyqtSignal(int, int, str, str, str) # remaining_seconds, total_seconds, mm:ss string, timer_type, active_name
     timerCompleted = pyqtSignal(str, str) # type ("focus"/"break"), msg string
     timerPaused = pyqtSignal()
     timerResumed = pyqtSignal()
@@ -187,7 +187,13 @@ class WebBridge(QObject):
         mins = self.timer_seconds_remaining // 60
         secs = self.timer_seconds_remaining % 60
         time_str = f"{mins:02d}:{secs:02d}"
-        self.timerTicked.emit(self.timer_seconds_remaining, time_str, self.timer_type)
+        self.timerTicked.emit(
+            self.timer_seconds_remaining, 
+            self.timer_total_seconds, 
+            time_str, 
+            self.timer_type, 
+            self.timer_active_name
+        )
 
     def _on_timer_completed(self):
         # 1. Check if it's a transition from focus to break for split presets
