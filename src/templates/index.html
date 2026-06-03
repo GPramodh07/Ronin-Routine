@@ -1160,11 +1160,29 @@
         }
 
         // --- UI Rendering ---
+        let lastRenderedDate = new Date().toDateString();
+
+        function isCompletedToday(task) {
+            if (!task.completed_at) return false;
+            let compDate = new Date(task.completed_at);
+            let today = new Date();
+            return compDate.toDateString() === today.toDateString();
+        }
+
+        function shouldShowTask(task) {
+            if (!task.completed && !task.crossed) return true;
+            return isCompletedToday(task);
+        }
+
         function renderTasks(tasks) {
             allQuests = tasks;
             let container = document.getElementById("tasks-list");
             container.innerHTML = "";
-            tasks.forEach(task => appendTask(task));
+            tasks.forEach(task => {
+                if (shouldShowTask(task)) {
+                    appendTask(task);
+                }
+            });
             updateQuestProgress();
         }
 
@@ -1774,6 +1792,18 @@
             setDashboardTheme(nextTheme);
             console.log(`Hourly automatic background shift triggered. Set theme to: ${nextTheme}`);
         }, 3600000);
+
+        // --- Daily Task Pruning Date Rollover Checker ---
+        // Periodically checks if the calendar day has rolled over to a new day.
+        // If it has, it automatically refreshes the task list to prune completed tasks from previous days.
+        setInterval(() => {
+            let todayStr = new Date().toDateString();
+            if (todayStr !== lastRenderedDate) {
+                lastRenderedDate = todayStr;
+                renderTasks(allQuests);
+                console.log(`Midnight rollover check: day changed to ${todayStr}. Task list re-filtered.`);
+            }
+        }, 30000); // Check every 30 seconds
 
         // --- Premium Zen Mini Spotify Player Engine ---
         let spotifySongs = [];
