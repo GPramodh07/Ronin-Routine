@@ -91,21 +91,51 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.web_view)
 
     def play_chime(self):
-        """Plays a zen meditation chime sound using PyQt's QSoundEffect or system beep fallback."""
+        """Plays a zen meditation chime sound. Uses system player (paplay/pw-play/aplay) to ensure correct audio routing when earphones are plugged in, falling back to QSoundEffect or system beep."""
+        import subprocess
+        
+        if os.path.exists(self.chime_path):
+            # Try paplay
+            try:
+                subprocess.Popen(["paplay", self.chime_path])
+                print("Zen chime played via paplay")
+                return
+            except Exception as e:
+                print(f"paplay failed: {e}")
+                
+            # Try pw-play
+            try:
+                subprocess.Popen(["pw-play", self.chime_path])
+                print("Zen chime played via pw-play")
+                return
+            except Exception as e:
+                print(f"pw-play failed: {e}")
+
+            # Try aplay
+            try:
+                subprocess.Popen(["aplay", self.chime_path])
+                print("Zen chime played via aplay")
+                return
+            except Exception as e:
+                print(f"aplay failed: {e}")
+
+        # Fallback to PyQt QSoundEffect
         try:
             from PyQt6.QtMultimedia import QSoundEffect
             self.sound_ref = QSoundEffect(self)
             if os.path.exists(self.chime_path):
                 self.sound_ref.setSource(QUrl.fromLocalFile(self.chime_path))
                 self.sound_ref.play()
-            else:
-                QApplication.beep()
+                print("Zen chime played via QSoundEffect")
+                return
         except Exception as e:
-            print(f"Zen chime sound failed: {e}. Executing fallback beep.")
-            try:
-                QApplication.beep()
-            except:
-                pass
+            print(f"QSoundEffect failed: {e}")
+
+        # Fallback to beep
+        try:
+            QApplication.beep()
+        except Exception as e:
+            print(f"Fallback beep failed: {e}")
 
     def show_notification(self, title, message):
         """Triggers system notification via notifier."""
