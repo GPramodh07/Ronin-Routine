@@ -20,10 +20,15 @@ It combines lightweight system tray access, actionable reminders, and a focus-fr
 
 ## ✅ What You Can Do
 
-- **Create tasks** and capture work with minimal friction
-- **Track progress** so every task moves forward with clarity
+- **Create and edit tasks** with minimal friction, updated in real-time
+- **Set monthly goals** to align daily work with bigger-picture objectives
+- **Track daily progress** with automatic task refresh each day for clear momentum
+- **Focus with timers** using built-in Pomodoro timers (30-min and 1-hour sessions) with pause/resume control
 - **Focus with music** by listening to pleasant songs while you work
-- **Receive reminders** in the system tray to stay on schedule
+- **Receive smart reminders** through the system tray and earphone notifications
+- **Meditate and find wisdom** with built-in guidance sections
+- **View stats** to understand your productivity patterns
+- **Customize your experience** with Dojo and Sumi-e visual themes
 - **Keep your workspace clean** with a non-intrusive app that stays tucked away until needed
 
 ## 🎯 Productivity Benefits
@@ -37,11 +42,16 @@ It combines lightweight system tray access, actionable reminders, and a focus-fr
 
 ## 🔧 Core Features
 
-- System tray launcher for quick access to controls
-- Notification-driven reminders and alerts
-- Embedded web bridge for rich, modern content
-- A Linux `.desktop` file for seamless desktop integration
-- Local `.venv` isolation so runtime files stay separate from source
+- **Multi-tab dashboard** with Tasks, Monthly Goals, Meditation, Wisdom, and Stats sections
+- **Smart task management** with real-time editing, daily refresh, and progress tracking
+- **Goal tracking** to break down monthly objectives into daily actionable tasks
+- **Pomodoro timers** for focused work sessions (30-minute and 1-hour options with pause/resume)
+- **System tray launcher** for quick access to controls and global timer status
+- **Intelligent notifications** including earphone-aware reminders and system tray alerts
+- **Multiple visual themes** (Dojo and Sumi-e) with dynamic background images
+- **Embedded web bridge** for rich, modern responsive content
+- **Linux desktop integration** with `.desktop` file for seamless app launching
+- **Local `.venv` isolation** so runtime files stay separate from source
 
 ---
 
@@ -84,11 +94,13 @@ Dependencies are defined in `requirements.txt`.
 ## 📁 Included Files
 
 - `src/main.py` — application entry point
+- `src/db.py` — database management for tasks, goals, and user data
 - `src/tray.py` — system tray management
-- `src/notification.py` — notification delivery
-- `src/web_bridge.py` — web integration layer
-- `src/templates/index.html` — embedded UI template
+- `src/notification.py` — notification delivery and earphone detection
+- `src/web_bridge.py` — web integration layer for frontend-backend communication
+- `src/templates/index.html` — embedded UI dashboard with multiple tabs and themes
 - `ronin-routine.desktop` — Linux desktop launcher file
+- `assets/` — app icons and theme background images (Dojo and Sumi-e themes)
 
 ---
 
@@ -101,6 +113,35 @@ Dependencies are defined in `requirements.txt`.
 ```bash
 sudo apt-get install -y libnss3 libasound2 libegl1 libxcomposite1 libxdamage1 libxrandr2 libxtst6 libxkbcommon0 libdbus-1-3 libxcb-xinerama0
 ```
+
+---
+
+## 🎯 Feature Guide
+
+### Tasks Tab
+- Create, edit, and mark tasks complete
+- Tasks automatically refresh daily to keep your focus fresh
+- Track individual task progress
+
+### Monthly Goals
+- Set high-level goals for the month
+- Break goals into daily actionable steps
+- Align daily tasks with long-term vision
+
+### Timers
+- Start 30-minute or 1-hour Pomodoro sessions
+- Pause and resume sessions as needed
+- See global timer status in the top bar
+
+### Reminders
+- System tray notifications for task reminders
+- Earphone-aware notifications when headphones are detected
+- Gentle nudges to keep you on track
+
+### Themes
+- **Dojo Theme** — traditional focused aesthetic
+- **Sumi-e Theme** — calming ink-wash inspired design
+- Switch themes on-the-fly without restarting
 
 ---
 

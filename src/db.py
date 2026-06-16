@@ -50,7 +50,8 @@ class Database:
                 {"text": "Simplicity is the ultimate sophistication of the warrior.", "author": "Miyamoto Musashi"},
                 {"text": "Do nothing that is of no use.", "author": "Miyamoto Musashi"}
             ],
-            "focus_sessions": []
+            "focus_sessions": [],
+            "monthly_tasks": []
         }
         self.load()
 
@@ -209,3 +210,72 @@ class Database:
         self.data["quotes"].append(quote)
         self.save()
         return quote
+
+    # --- Monthly Tasks / Goals Management ---
+    def get_monthly_tasks(self):
+        if "monthly_tasks" not in self.data:
+            self.data["monthly_tasks"] = []
+        return self.data["monthly_tasks"]
+
+    def add_monthly_task(self, title, month):
+        if not title.strip() or not month.strip():
+            return None
+        if "monthly_tasks" not in self.data:
+            self.data["monthly_tasks"] = []
+            
+        task_id = f"mtask_{int(datetime.now().timestamp() * 1000)}"
+        new_task = {
+            "id": task_id,
+            "title": title.strip(),
+            "month": month.strip(), # stored as 'YYYY-MM'
+            "completed": False,
+            "created_at": datetime.now().isoformat(),
+            "completed_at": None
+        }
+        self.data["monthly_tasks"].insert(0, new_task)
+        self.save()
+        return new_task
+
+    def toggle_monthly_task(self, task_id, completed):
+        if "monthly_tasks" not in self.data:
+            self.data["monthly_tasks"] = []
+            
+        for task in self.data["monthly_tasks"]:
+            if task["id"] == task_id:
+                old_completed = task.get("completed", False)
+                task["completed"] = completed
+                task["completed_at"] = datetime.now().isoformat() if completed else None
+                
+                # Gamified XP: +30 XP for Monthly Goal completion
+                if completed and not old_completed:
+                    self.data["stats"]["slashed_tasks"] += 1
+                    self.add_xp(30)
+                elif not completed and old_completed:
+                    self.data["stats"]["slashed_tasks"] = max(0, self.data["stats"]["slashed_tasks"] - 1)
+                    self.add_xp(-30)
+                
+                self.save()
+                return task
+        return None
+
+    def update_monthly_task_title(self, task_id, new_title):
+        if "monthly_tasks" not in self.data:
+            return None
+            
+        for task in self.data["monthly_tasks"]:
+            if task["id"] == task_id:
+                task["title"] = new_title.strip()
+                self.save()
+                return task
+        return None
+
+    def delete_monthly_task(self, task_id):
+        if "monthly_tasks" not in self.data:
+            return False
+            
+        initial_len = len(self.data["monthly_tasks"])
+        self.data["monthly_tasks"] = [t for t in self.data["monthly_tasks"] if t["id"] != task_id]
+        if len(self.data["monthly_tasks"]) < initial_len:
+            self.save()
+            return True
+        return False

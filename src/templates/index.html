@@ -354,6 +354,10 @@
                 <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">edit_note</span>
                 <span class="font-label-caps text-xs">The Scrolls (Tasks)</span>
             </button>
+            <button onclick="switchTab('monthly')" id="tab-btn-monthly" class="tab-btn text-on-surface-variant px-4 py-3 flex items-center gap-3 hover:bg-surface-variant transition-all text-left border-l-4 border-transparent">
+                <span class="material-symbols-outlined">calendar_month</span>
+                <span class="font-label-caps text-xs">Monthly Goals</span>
+            </button>
             <button onclick="switchTab('meditate')" id="tab-btn-meditate" class="tab-btn text-on-surface-variant px-4 py-3 flex items-center gap-3 hover:bg-surface-variant transition-all text-left border-l-4 border-transparent">
                 <span class="material-symbols-outlined">spa</span>
                 <span class="font-label-caps text-xs">Meditate (Zen)</span>
@@ -614,6 +618,72 @@
                                 <div class="spotify-playlist-container flex flex-col gap-1">
                                     <!-- Song items dynamically injected -->
                                 </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- SECTION 1B: MONTHLY GOALS TAB -->
+            <div id="tab-monthly" class="tab-content">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+                    
+                    <!-- Left Column: Add Monthly Quest -->
+                    <section class="lg:col-span-4 flex flex-col gap-unit">
+                        <div class="flex items-center justify-between border-b-2 border-primary pb-2 mb-4">
+                            <h2 class="font-headline-md text-2xl text-on-surface flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary text-2xl">event_upcoming</span>
+                                Monthly Plan
+                            </h2>
+                        </div>
+                        
+                        <div class="card-container bg-parchment p-6 shadow-sm flex flex-col gap-6 relative ink-border">
+                            <!-- Decorative paper badge -->
+                            <div class="absolute -top-3 -right-3 w-6 h-6 bg-primary opacity-80" style="clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);"></div>
+                            
+                            <!-- Form Container -->
+                            <div class="flex flex-col gap-4">
+                                <div class="flex flex-col gap-1.5">
+                                    <label class="font-label-caps text-[10px] text-on-surface-variant">Engrave Goal</label>
+                                    <input id="monthly-task-input" onkeydown="handleMonthlyTaskInput(event)" class="w-full bg-transparent border-b border-outline py-2.5 px-2 font-body-lg text-[15px] text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:border-primary transition-colors" placeholder="e.g. Complete AI ML course..." type="text"/>
+                                </div>
+
+                                <div class="flex flex-col gap-1.5">
+                                    <label class="font-label-caps text-[10px] text-on-surface-variant">Select Month</label>
+                                    <select id="monthly-task-month-select" class="w-full bg-surface-container text-on-surface border border-outline/50 p-2.5 font-label-caps text-xs focus:outline-none focus:border-primary transition-colors">
+                                        <!-- Dynamically populated -->
+                                    </select>
+                                </div>
+
+                                <button onclick="addNewMonthlyTask()" class="w-full bg-primary-container border border-primary text-primary hover:bg-primary hover:text-surface-container-lowest font-label-caps py-3 text-xs transition-colors flex items-center justify-center gap-2 mt-2">
+                                    <span class="material-symbols-outlined text-sm">auto_awesome</span>
+                                    Engrave Goal
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Gamified monthly note -->
+                        <div class="card-container bg-surface-container-low p-6 relative ink-border border-l-4 border-l-primary mt-4">
+                            <h3 class="font-headline-sm text-sm text-primary uppercase tracking-wider mb-2">Monthly Honor</h3>
+                            <p class="font-body-md text-xs text-on-surface-variant leading-relaxed">
+                                Aligning your focus with long-term seasonal milestones builds true discipline. Each completed monthly goal awards <strong class="text-primary font-semibold">+30 XP</strong>.
+                            </p>
+                        </div>
+                    </section>
+
+                    <!-- Right Column: Monthly Quests by Months -->
+                    <section class="lg:col-span-8 flex flex-col gap-unit">
+                        <div class="flex items-center justify-between border-b-2 border-primary pb-2 mb-4">
+                            <h2 class="font-headline-md text-2xl text-on-surface flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary text-2xl">calendar_view_month</span>
+                                Monthly Scrolls
+                            </h2>
+                        </div>
+                        
+                        <!-- Dynamic list of Month scrolls -->
+                        <div class="flex flex-col gap-6" id="monthly-scrolls-container">
+                            <div class="text-center py-12 text-on-surface-variant/60 font-body-md text-sm italic card-container bg-parchment p-8 ink-border">
+                                No monthly goals engraved yet. Define your roadmap!
                             </div>
                         </div>
                     </section>
@@ -891,19 +961,23 @@
 
     <!-- BottomNavBar (Mobile Only fallback) -->
     <nav aria-label="Bottom Navigation" class="lg:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 bg-surface border-t border-outline pb-safe shadow-lg">
-        <button onclick="switchTab('tasks')" class="flex flex-col items-center justify-center text-primary scale-110 transition-all duration-300">
+        <button id="mobile-tab-btn-tasks" onclick="switchTab('tasks')" class="flex flex-col items-center justify-center text-primary scale-110 transition-all duration-300">
             <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">grid_view</span>
             <span class="font-label-caps text-[9px] mt-1">Dojo</span>
         </button>
-        <button onclick="switchTab('meditate')" class="flex flex-col items-center justify-center text-on-surface-variant opacity-70">
+        <button id="mobile-tab-btn-monthly" onclick="switchTab('monthly')" class="flex flex-col items-center justify-center text-on-surface-variant opacity-70">
+            <span class="material-symbols-outlined">calendar_month</span>
+            <span class="font-label-caps text-[9px] mt-1">Monthly</span>
+        </button>
+        <button id="mobile-tab-btn-meditate" onclick="switchTab('meditate')" class="flex flex-col items-center justify-center text-on-surface-variant opacity-70">
             <span class="material-symbols-outlined">spa</span>
             <span class="font-label-caps text-[9px] mt-1">Meditate</span>
         </button>
-        <button onclick="switchTab('wisdom')" class="flex flex-col items-center justify-center text-on-surface-variant opacity-70">
+        <button id="mobile-tab-btn-wisdom" onclick="switchTab('wisdom')" class="flex flex-col items-center justify-center text-on-surface-variant opacity-70">
             <span class="material-symbols-outlined">auto_stories</span>
             <span class="font-label-caps text-[9px] mt-1">Wisdom</span>
         </button>
-        <button onclick="switchTab('stats')" class="flex flex-col items-center justify-center text-on-surface-variant opacity-70">
+        <button id="mobile-tab-btn-stats" onclick="switchTab('stats')" class="flex flex-col items-center justify-center text-on-surface-variant opacity-70">
             <span class="material-symbols-outlined">query_stats</span>
             <span class="font-label-caps text-[9px] mt-1">Stats</span>
         </button>
@@ -934,6 +1008,7 @@
         
         // Initialize QWebChannel
         document.addEventListener("DOMContentLoaded", () => {
+            populateMonthDropdown();
             if (typeof qt !== "undefined" && qt.webChannelTransport) {
                 new QWebChannel(qt.webChannelTransport, function (channel) {
                     bridge = channel.objects.pyBridge;
@@ -969,6 +1044,30 @@
                             updateTaskElement(task);
                         }
                         updateQuestProgress();
+                    });
+
+                    // Monthly signals
+                    bridge.monthlyTaskAdded.connect((taskJson) => {
+                        let task = JSON.parse(taskJson);
+                        allMonthlyQuests.unshift(task);
+                        renderMonthlyTasks(allMonthlyQuests);
+                    });
+                    
+                    bridge.monthlyTaskToggled.connect((taskJson) => {
+                        let task = JSON.parse(taskJson);
+                        allMonthlyQuests = allMonthlyQuests.map(q => q.id === task.id ? task : q);
+                        renderMonthlyTasks(allMonthlyQuests);
+                    });
+                    
+                    bridge.monthlyTaskDeleted.connect((taskId) => {
+                        allMonthlyQuests = allMonthlyQuests.filter(q => q.id !== taskId);
+                        renderMonthlyTasks(allMonthlyQuests);
+                    });
+                    
+                    bridge.monthlyTaskUpdated.connect((taskJson) => {
+                        let task = JSON.parse(taskJson);
+                        allMonthlyQuests = allMonthlyQuests.map(q => q.id === task.id ? task : q);
+                        renderMonthlyTasks(allMonthlyQuests);
                     });
                     
                     bridge.timerTicked.connect((secondsLeft, totalSecs, timeStr, type, name) => {
@@ -1021,6 +1120,12 @@
             bridge.getTasks(function(tasksJson) {
                 let tasks = JSON.parse(tasksJson);
                 renderTasks(tasks);
+            });
+
+            // Fetch initial monthly tasks
+            bridge.getMonthlyTasks(function(monthlyTasksJson) {
+                let mTasks = JSON.parse(monthlyTasksJson);
+                renderMonthlyTasks(mTasks);
             });
             
             // Fetch stats
@@ -1177,6 +1282,257 @@
                     </div>
                 `;
                 container.appendChild(itemDiv);
+            });
+        }
+
+        // --- Monthly Goals / Quests Logic & Rendering ---
+        let allMonthlyQuests = [];
+
+        function populateMonthDropdown() {
+            let select = document.getElementById("monthly-task-month-select");
+            if (!select) return;
+            select.innerHTML = "";
+            
+            let date = new Date();
+            for (let i = 0; i < 12; i++) {
+                let year = date.getFullYear();
+                let monthVal = (date.getMonth() + 1).toString().padStart(2, '0');
+                let optionValue = `${year}-${monthVal}`;
+                
+                let monthLabel = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+                
+                let option = document.createElement("option");
+                option.value = optionValue;
+                option.textContent = monthLabel;
+                select.appendChild(option);
+                
+                date.setMonth(date.getMonth() + 1);
+            }
+        }
+
+        function handleMonthlyTaskInput(event) {
+            if (event.key === "Enter") {
+                addNewMonthlyTask();
+            }
+        }
+
+        function addNewMonthlyTask() {
+            let input = document.getElementById("monthly-task-input");
+            let monthSelect = document.getElementById("monthly-task-month-select");
+            let title = input.value.trim();
+            let month = monthSelect.value;
+            if (!title || !month) return;
+            
+            if (bridge) {
+                bridge.addMonthlyTask(title, month);
+            } else {
+                let mockTask = {
+                    id: "mtask_" + Date.now(),
+                    title: title,
+                    month: month,
+                    completed: false,
+                    created_at: new Date().toISOString(),
+                    completed_at: null
+                };
+                allMonthlyQuests.unshift(mockTask);
+                renderMonthlyTasks(allMonthlyQuests);
+            }
+            input.value = "";
+        }
+
+        function handleToggleMonthlyTask(taskId, completed) {
+            if (bridge) {
+                bridge.toggleMonthlyTask(taskId, completed);
+            } else {
+                allMonthlyQuests = allMonthlyQuests.map(q => {
+                    if (q.id === taskId) {
+                        return {
+                            ...q,
+                            completed: completed,
+                            completed_at: completed ? new Date().toISOString() : null
+                        };
+                    }
+                    return q;
+                });
+                renderMonthlyTasks(allMonthlyQuests);
+            }
+        }
+
+        function handleDeleteMonthlyTask(taskId) {
+            if (bridge) {
+                bridge.deleteMonthlyTask(taskId);
+            } else {
+                allMonthlyQuests = allMonthlyQuests.filter(q => q.id !== taskId);
+                renderMonthlyTasks(allMonthlyQuests);
+            }
+        }
+
+        function handleEditMonthlyTask(taskId, newTitle) {
+            newTitle = newTitle.trim();
+            if (!newTitle) return;
+            
+            if (bridge) {
+                bridge.editMonthlyTask(taskId, newTitle);
+            } else {
+                allMonthlyQuests = allMonthlyQuests.map(q => q.id === taskId ? { ...q, title: newTitle } : q);
+                renderMonthlyTasks(allMonthlyQuests);
+            }
+        }
+
+        function renderMonthlyTasks(tasks) {
+            allMonthlyQuests = tasks;
+            let container = document.getElementById("monthly-scrolls-container");
+            if (!container) return;
+            
+            if (tasks.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-on-surface-variant/60 font-body-md text-sm italic card-container bg-parchment p-8 ink-border">
+                        No monthly goals engraved yet. Define your roadmap!
+                    </div>
+                `;
+                return;
+            }
+            
+            let grouped = {};
+            tasks.forEach(task => {
+                let m = task.month || "Other";
+                if (!grouped[m]) grouped[m] = [];
+                grouped[m].push(task);
+            });
+            
+            let monthsSorted = Object.keys(grouped).sort();
+            
+            container.innerHTML = "";
+            
+            monthsSorted.forEach(mKey => {
+                let monthTasks = grouped[mKey];
+                let cardDiv = document.createElement("div");
+                cardDiv.className = "card-container bg-parchment p-6 shadow-sm flex flex-col gap-4 relative ink-border";
+                
+                let displayMonth = mKey;
+                if (mKey.match(/^\d{4}-\d{2}$/)) {
+                    let [y, monthNum] = mKey.split("-");
+                    let date = new Date(parseInt(y), parseInt(monthNum) - 1, 1);
+                    displayMonth = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+                }
+                
+                let total = monthTasks.length;
+                let completed = monthTasks.filter(q => q.completed).length;
+                let percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+                
+                cardDiv.innerHTML = `
+                    <div class="absolute -top-3 -right-3 w-6 h-6 bg-primary opacity-80" style="clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);"></div>
+                    
+                    <div class="flex items-center justify-between border-b border-outline/30 pb-2">
+                        <h3 class="font-headline-md text-xl text-primary font-bold uppercase tracking-wider">${displayMonth}</h3>
+                        <span class="font-label-caps text-[10px] text-on-surface-variant">${completed} of ${total} (${percent}%) Completed</span>
+                    </div>
+
+                    <div class="w-full bg-surface-container-highest h-2 border border-outline/30 mb-2">
+                        <div class="bg-primary h-full transition-all duration-300" style="width: ${percent}%;"></div>
+                    </div>
+
+                    <div class="flex flex-col gap-3 min-h-[50px] monthly-tasks-list" data-month="${mKey}">
+                    </div>
+                `;
+                
+                let listContainer = cardDiv.querySelector(".monthly-tasks-list");
+                
+                monthTasks.forEach(task => {
+                    let taskDiv = document.createElement("div");
+                    taskDiv.setAttribute("data-id", task.id);
+                    taskDiv.className = "group flex flex-col p-3 border border-transparent hover:border-outline/40 transition-all bg-surface-container-low/60";
+                    
+                    let tickActive = task.completed ? "tick-completed" : "";
+                    let textClass = task.completed ? "task-completed-text" : "text-on-surface";
+                    
+                    taskDiv.innerHTML = `
+                        <div class="task-view-mode flex items-start gap-4 w-full">
+                            <div class="flex items-center gap-1.5 mt-0.5 flex-shrink-0">
+                                <button title="Slash Monthly Goal (Complete)" class="katana-action-btn tick-btn ${tickActive}">
+                                    <span class="material-symbols-outlined text-[12px] text-primary">done</span>
+                                </button>
+                            </div>
+                            <span class="font-body-lg text-sm flex-1 task-title ${textClass}">${task.title}</span>
+                            <div class="flex items-center gap-1 ml-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all">
+                                <button aria-label="Edit quest" class="edit-btn text-outline-variant hover:text-primary transition-colors flex items-center justify-center p-0.5 mt-0.5">
+                                    <span class="material-symbols-outlined text-lg">edit</span>
+                                </button>
+                                <button aria-label="Delete quest" class="delete-btn text-outline-variant hover:text-red-500 transition-colors flex items-center justify-center p-0.5 mt-0.5">
+                                    <span class="material-symbols-outlined text-lg">close</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="task-edit-mode hidden items-center gap-2 w-full">
+                            <input type="text" class="edit-input flex-1 bg-surface-container-low border border-outline/40 px-2 py-1.5 font-body-lg text-sm text-on-surface focus:outline-none focus:border-primary transition-colors" value="${task.title.replace(/"/g, '&quot;')}">
+                            <div class="flex items-center gap-1.5 flex-shrink-0">
+                                <button title="Save Quest (Enter)" class="save-edit-btn katana-action-btn border-primary bg-primary-container/20">
+                                    <span class="material-symbols-outlined text-[12px] text-primary">done</span>
+                                </button>
+                                <button title="Cancel Edit (Esc)" class="cancel-edit-btn katana-action-btn border-outline-variant">
+                                    <span class="material-symbols-outlined text-[12px] text-on-surface/60">close</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    let tickBtn = taskDiv.querySelector(".tick-btn");
+                    let deleteBtn = taskDiv.querySelector(".delete-btn");
+                    let editBtn = taskDiv.querySelector(".edit-btn");
+                    let saveEditBtn = taskDiv.querySelector(".save-edit-btn");
+                    let cancelEditBtn = taskDiv.querySelector(".cancel-edit-btn");
+                    let editInput = taskDiv.querySelector(".edit-input");
+                    
+                    tickBtn.addEventListener("click", () => {
+                        let isCompleted = !tickBtn.classList.contains("tick-completed");
+                        handleToggleMonthlyTask(task.id, isCompleted);
+                    });
+                    
+                    deleteBtn.addEventListener("click", () => {
+                        handleDeleteMonthlyTask(task.id);
+                    });
+                    
+                    editBtn.addEventListener("click", () => {
+                        let currentText = taskDiv.querySelector(".task-title").textContent;
+                        editInput.value = currentText;
+                        taskDiv.classList.add("editing");
+                        setTimeout(() => {
+                            editInput.focus();
+                            editInput.select();
+                        }, 50);
+                    });
+                    
+                    cancelEditBtn.addEventListener("click", () => {
+                        taskDiv.classList.remove("editing");
+                        let originalTitle = allMonthlyQuests.find(q => q.id === task.id)?.title || task.title;
+                        editInput.value = originalTitle;
+                    });
+                    
+                    saveEditBtn.addEventListener("click", () => {
+                        let newTitle = editInput.value.trim();
+                        if (newTitle) {
+                            handleEditMonthlyTask(task.id, newTitle);
+                        }
+                    });
+                    
+                    editInput.addEventListener("keydown", (e) => {
+                        if (e.key === "Enter") {
+                            let newTitle = editInput.value.trim();
+                            if (newTitle) {
+                                handleEditMonthlyTask(task.id, newTitle);
+                            }
+                        } else if (e.key === "Escape") {
+                            taskDiv.classList.remove("editing");
+                            let originalTitle = allMonthlyQuests.find(q => q.id === task.id)?.title || task.title;
+                            editInput.value = originalTitle;
+                        }
+                    });
+                    
+                    listContainer.appendChild(taskDiv);
+                });
+                
+                container.appendChild(cardDiv);
             });
         }
 
@@ -1584,11 +1940,21 @@
                 activeBtn.className = "tab-btn bg-primary-container/20 text-primary border-l-4 border-primary px-4 py-3 flex items-center gap-3 transition-all text-left";
             }
             
+            // Mobile Nav Sync
+            document.querySelectorAll(".lg\\:hidden button").forEach(btn => {
+                btn.className = "flex flex-col items-center justify-center text-on-surface-variant opacity-70";
+            });
+            let activeMobileBtn = document.getElementById(`mobile-tab-btn-${tabId}`);
+            if (activeMobileBtn) {
+                activeMobileBtn.className = "flex flex-col items-center justify-center text-primary scale-110 transition-all duration-300";
+            }
+            
             // Show content
             document.querySelectorAll(".tab-content").forEach(content => {
                 content.classList.remove("active");
             });
             document.getElementById(`tab-tasks`).style.display = 'none';
+            document.getElementById(`tab-monthly`).style.display = 'none';
             document.getElementById(`tab-meditate`).style.display = 'none';
             document.getElementById(`tab-wisdom`).style.display = 'none';
             document.getElementById(`tab-stats`).style.display = 'none';
@@ -1799,6 +2165,12 @@
                 { name: "Off - kudo.mp3", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3", title: "Off", artist: "kudo" }
             ];
             initializeSpotify(mockSongs);
+
+            let mockMonthlyTasks = [
+                { id: "mtask_1", title: "Complete AI ML course", month: "2026-07", completed: false, created_at: new Date().toISOString() },
+                { id: "mtask_2", title: "Read Book of Five Rings", month: "2026-06", completed: true, created_at: new Date().toISOString(), completed_at: new Date().toISOString() }
+            ];
+            renderMonthlyTasks(mockMonthlyTasks);
         }
 
         let mockTimerInterval = null;
