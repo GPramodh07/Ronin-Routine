@@ -38,6 +38,10 @@ class NotificationHelper:
                 cmd = ["notify-send", "-a", "Ronin Routine", title, message]
                 if self.app_icon_path and os.path.exists(self.app_icon_path):
                     cmd.extend(["-i", self.app_icon_path])
+                    # Add sound-file hint if zen_chime.wav exists in the assets folder
+                    chime_path = os.path.join(os.path.dirname(self.app_icon_path), "zen_chime.wav")
+                    if os.path.exists(chime_path):
+                        cmd.extend(["-h", f"string:sound-file:{chime_path}"])
                 subprocess.Popen(cmd)
                 return
             except Exception as e:
