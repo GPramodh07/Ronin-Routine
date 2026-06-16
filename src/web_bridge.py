@@ -8,6 +8,10 @@ class WebBridge(QObject):
     taskToggled = pyqtSignal(str)    # JSON string
     taskDeleted = pyqtSignal(str)    # task_id string
     taskUpdated = pyqtSignal(str)    # JSON string
+    monthlyTaskAdded = pyqtSignal(str)      # JSON string
+    monthlyTaskToggled = pyqtSignal(str)    # JSON string
+    monthlyTaskDeleted = pyqtSignal(str)    # task_id string
+    monthlyTaskUpdated = pyqtSignal(str)    # JSON string
     timerTicked = pyqtSignal(int, int, str, str, str) # remaining_seconds, total_seconds, mm:ss string, timer_type, active_name
     timerCompleted = pyqtSignal(str, str) # type ("focus"/"break"), msg string
     timerPaused = pyqtSignal()
@@ -120,6 +124,48 @@ class WebBridge(QObject):
         if task:
             task_json = json.dumps(task)
             self.taskUpdated.emit(task_json)
+            return task_json
+        return ""
+
+    @pyqtSlot(result=str)
+    def getMonthlyTasks(self):
+        return json.dumps(self.db.get_monthly_tasks())
+
+    @pyqtSlot(str, str, result=str)
+    def addMonthlyTask(self, title, month):
+        task = self.db.add_monthly_task(title, month)
+        if task:
+            task_json = json.dumps(task)
+            self.monthlyTaskAdded.emit(task_json)
+            self.statsUpdated.emit(json.dumps(self.db.get_stats()))
+            return task_json
+        return ""
+
+    @pyqtSlot(str, bool, result=str)
+    def toggleMonthlyTask(self, task_id, completed):
+        task = self.db.toggle_monthly_task(task_id, completed)
+        if task:
+            task_json = json.dumps(task)
+            self.monthlyTaskToggled.emit(task_json)
+            self.statsUpdated.emit(json.dumps(self.db.get_stats()))
+            return task_json
+        return ""
+
+    @pyqtSlot(str, result=bool)
+    def deleteMonthlyTask(self, task_id):
+        success = self.db.delete_monthly_task(task_id)
+        if success:
+            self.monthlyTaskDeleted.emit(task_id)
+            self.statsUpdated.emit(json.dumps(self.db.get_stats()))
+            return True
+        return False
+
+    @pyqtSlot(str, str, result=str)
+    def editMonthlyTask(self, task_id, new_title):
+        task = self.db.update_monthly_task_title(task_id, new_title)
+        if task:
+            task_json = json.dumps(task)
+            self.monthlyTaskUpdated.emit(task_json)
             return task_json
         return ""
 
