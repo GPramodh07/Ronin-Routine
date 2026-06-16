@@ -91,51 +91,46 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.web_view)
 
     def play_chime(self):
-        """Plays a zen meditation chime sound. Uses system player (paplay/pw-play/aplay) to ensure correct audio routing when earphones are plugged in, falling back to QSoundEffect or system beep."""
+        """Plays a zen meditation chime sound. Uses a background thread to attempt playing via CLI sound servers (pw-play, paplay, aplay) sequentially with verify-and-fallback logic, ensuring audio routes properly when earphones are plugged in."""
+        import threading
         import subprocess
-        
-        if os.path.exists(self.chime_path):
-            # Try paplay
-            try:
-                subprocess.Popen(["paplay", self.chime_path])
-                print("Zen chime played via paplay")
-                return
-            except Exception as e:
-                print(f"paplay failed: {e}")
-                
-            # Try pw-play
-            try:
-                subprocess.Popen(["pw-play", self.chime_path])
-                print("Zen chime played via pw-play")
-                return
-            except Exception as e:
-                print(f"pw-play failed: {e}")
+        import shutil
 
-            # Try aplay
-            try:
-                subprocess.Popen(["aplay", self.chime_path])
-                print("Zen chime played via aplay")
+        def _play_thread():
+            if not os.path.exists(self.chime_path):
+                print(f"Chime audio file not found at: {self.chime_path}")
                 return
-            except Exception as e:
-                print(f"aplay failed: {e}")
 
-        # Fallback to PyQt QSoundEffect
-        try:
-            from PyQt6.QtMultimedia import QSoundEffect
-            self.sound_ref = QSoundEffect(self)
-            if os.path.exists(self.chime_path):
-                self.sound_ref.setSource(QUrl.fromLocalFile(self.chime_path))
-                self.sound_ref.play()
-                print("Zen chime played via QSoundEffect")
-                return
-        except Exception as e:
-            print(f"QSoundEffect failed: {e}")
+            players = [
+                ["pw-play", self.chime_path],
+                ["paplay", self.chime_path],
+                ["aplay", self.chime_path]
+            ]
 
-        # Fallback to beep
-        try:
-            QApplication.beep()
-        except Exception as e:
-            print(f"Fallback beep failed: {e}")
+            played_successfully = False
+            for cmd in players:
+                try:
+                    if shutil.which(cmd[0]):
+                        print(f"Attempting to play zen chime via {cmd[0]}...")
+                        # Execute and wait for return code
+                        res = subprocess.run(cmd, capture_output=True, text=True)
+                        if res.returncode == 0:
+                            print(f"Zen chime played successfully via {cmd[0]}")
+                            played_successfully = True
+                            break
+                        else:
+                            print(f"{cmd[0]} failed with return code {res.returncode}: {res.stderr.strip()}")
+                except Exception as e:
+                    print(f"Playback error via {cmd[0]}: {e}")
+
+            if not played_successfully:
+                print("All CLI sound servers failed. Triggering motherboard beep fallback...")
+                try:
+                    QApplication.beep()
+                except Exception as e:
+                    print(f"Fallback motherboard beep failed: {e}")
+
+        threading.Thread(target=_play_thread, daemon=True).start()
 
     def show_notification(self, title, message):
         """Triggers system notification via notifier."""
