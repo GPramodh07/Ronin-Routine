@@ -1273,6 +1273,18 @@
             
             container.innerHTML = "";
             completedQuests.forEach(task => {
+                let dateStr = "";
+                if (task.completed_at) {
+                    try {
+                        let d = new Date(task.completed_at);
+                        if (!isNaN(d.getTime())) {
+                            dateStr = d.toLocaleDateString('default', { month: 'short', day: 'numeric', year: 'numeric' });
+                        }
+                    } catch (e) {
+                        console.error(e);
+                    }
+                }
+
                 let itemDiv = document.createElement("div");
                 itemDiv.className = "flex items-center gap-3 p-3 bg-surface-container-low/80 border border-outline/30 rounded-sm relative overflow-hidden ink-border";
                 
@@ -1283,6 +1295,7 @@
                     <span class="material-symbols-outlined text-primary text-md">check_circle</span>
                     <div class="flex flex-col text-left overflow-hidden">
                         <span class="font-body-lg text-sm text-on-surface opacity-90 truncate" title="${task.title}">${task.title}</span>
+                        ${dateStr ? `<span class="font-label-caps text-[9px] text-on-surface-variant/70 mt-0.5 tracking-wider">Slashed: ${dateStr}</span>` : ''}
                     </div>
                 `;
                 container.appendChild(itemDiv);
