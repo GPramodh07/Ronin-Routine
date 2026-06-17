@@ -18,6 +18,7 @@ class WebBridge(QObject):
     timerResumed = pyqtSignal()
     statsUpdated = pyqtSignal(str)   # JSON string
     quotesUpdated = pyqtSignal(str)  # JSON string
+    chimeTriggered = pyqtSignal()    # Triggered to play HTML5 audio chime
 
     def __init__(self, db: Database, play_chime_callback=None, show_notification_callback=None):
         super().__init__()
@@ -253,7 +254,7 @@ class WebBridge(QObject):
                 if self.play_chime:
                     self.play_chime()
                 if self.show_notification:
-                    self.show_notification("Time to Break", "Focus interval completed! Time to take a 5-minute break.")
+                    self.show_notification("Time to Break", "Focus interval completed! Time to take a 5-minute break.", urgency="critical")
                 
                 # Auto transition to break timer
                 self.startTimer(5, "break", "Short Rest")
@@ -268,7 +269,7 @@ class WebBridge(QObject):
                 if self.play_chime:
                     self.play_chime()
                 if self.show_notification:
-                    self.show_notification("Time to Break", "Focus interval completed! Time to take a 10-minute break.")
+                    self.show_notification("Time to Break", "Focus interval completed! Time to take a 10-minute break.", urgency="critical")
                 
                 # Auto transition to break timer
                 self.startTimer(10, "break", "Long Rest")
@@ -291,7 +292,7 @@ class WebBridge(QObject):
 
         # Trigger Notification
         if self.show_notification:
-            self.show_notification(title, msg)
+            self.show_notification(title, msg, urgency="critical")
 
         # Emit Completed Signal to JS
         self.timerCompleted.emit(self.timer_type, msg)

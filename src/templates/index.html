@@ -1081,6 +1081,10 @@
                         resetTimerUI(type, message);
                     });
                     
+                    bridge.chimeTriggered.connect(() => {
+                        playZenChime();
+                    });
+                    
                     bridge.timerPaused.connect(() => {
                         activeTimer = false;
                         updatePauseResumeUI();
@@ -1915,6 +1919,18 @@
             updatePauseResumeUI();
         }
 
+        function playZenChime() {
+            try {
+                let chimeAudio = new Audio('../../assets/zen_chime.wav');
+                chimeAudio.volume = 1.0;
+                chimeAudio.play().catch(err => {
+                    console.warn("HTML5 Audio play failed or deferred:", err);
+                });
+            } catch (e) {
+                console.error("Failed to play HTML5 audio chime:", e);
+            }
+        }
+
         function resetTimerUI(type, message) {
             activeTimer = false;
             document.getElementById("active-timer-widget").style.display = "none";
@@ -2203,12 +2219,15 @@
                     activeTimer = false;
                     
                     if (type === "focus" && name === "Short Rest") {
+                        playZenChime();
                         alert("Time to Break: Focus interval completed! Time to take a 5-minute break.");
                         startMockTimer(5, "break", "Short Rest");
                     } else if (type === "focus" && name === "Long Rest") {
+                        playZenChime();
                         alert("Time to Break: Focus interval completed! Time to take a 10-minute break.");
                         startMockTimer(10, "break", "Long Rest");
                     } else {
+                        playZenChime();
                         resetTimerUI(type, `${name} interval has ended.`);
                     }
                 }

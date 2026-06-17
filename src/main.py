@@ -36,10 +36,7 @@ class MainWindow(QMainWindow):
         # 1. Setup Notification Helper
         self.notifier = NotificationHelper(app_icon_path=self.icon_path)
 
-        # 2. Setup Sound Chime Callback
-        self.sound_ref = None
-
-        # 3. Setup Web Bridge
+        # 2. Setup Web Bridge
         self.bridge = WebBridge(
             self.db,
             play_chime_callback=self.play_chime,
@@ -71,6 +68,7 @@ class MainWindow(QMainWindow):
         settings.setAttribute(QWebEngineSettings.WebAttribute.LocalContentCanAccessRemoteUrls, True)
         settings.setAttribute(QWebEngineSettings.WebAttribute.LocalContentCanAccessFileUrls, True)
         settings.setAttribute(QWebEngineSettings.WebAttribute.LocalStorageEnabled, True)
+        settings.setAttribute(QWebEngineSettings.WebAttribute.PlaybackRequiresUserGesture, False)
         
         if self.dev_mode:
             settings.setAttribute(QWebEngineSettings.WebAttribute.DeveloperExtrasEnabled, True)
@@ -95,6 +93,12 @@ class MainWindow(QMainWindow):
         import threading
         import subprocess
         import shutil
+
+        # Trigger HTML5 audio chime in the webview
+        try:
+            self.bridge.chimeTriggered.emit()
+        except Exception as e:
+            print(f"Error emitting chimeTriggered signal: {e}")
 
         def _play_thread():
             if not os.path.exists(self.chime_path):
@@ -132,9 +136,9 @@ class MainWindow(QMainWindow):
 
         threading.Thread(target=_play_thread, daemon=True).start()
 
-    def show_notification(self, title, message):
+    def show_notification(self, title, message, urgency="normal"):
         """Triggers system notification via notifier."""
-        self.notifier.send(title, message, tray_icon=self.tray_icon)
+        self.notifier.send(title, message, tray_icon=self.tray_icon, urgency=urgency)
 
     def update_tray_timer_state(self, seconds_remaining, time_str, timer_type=None):
         """Update System Tray Tooltip and pause/resume enablement actions."""
