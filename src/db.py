@@ -136,9 +136,17 @@ class Database:
         return None
 
     def delete_task(self, task_id):
-        initial_len = len(self.data["tasks"])
-        self.data["tasks"] = [t for t in self.data["tasks"] if t["id"] != task_id]
-        if len(self.data["tasks"]) < initial_len:
+        task_to_delete = None
+        for task in self.data["tasks"]:
+            if task["id"] == task_id:
+                task_to_delete = task
+                break
+        
+        if task_to_delete:
+            if task_to_delete.get("completed", False):
+                self.data["stats"]["slashed_tasks"] = max(0, self.data["stats"]["slashed_tasks"] - 1)
+                self.add_xp(-10)
+            self.data["tasks"] = [t for t in self.data["tasks"] if t["id"] != task_id]
             self.save()
             return True
         return False
@@ -273,9 +281,17 @@ class Database:
         if "monthly_tasks" not in self.data:
             return False
             
-        initial_len = len(self.data["monthly_tasks"])
-        self.data["monthly_tasks"] = [t for t in self.data["monthly_tasks"] if t["id"] != task_id]
-        if len(self.data["monthly_tasks"]) < initial_len:
+        task_to_delete = None
+        for task in self.data["monthly_tasks"]:
+            if task["id"] == task_id:
+                task_to_delete = task
+                break
+        
+        if task_to_delete:
+            if task_to_delete.get("completed", False):
+                self.data["stats"]["slashed_tasks"] = max(0, self.data["stats"]["slashed_tasks"] - 1)
+                self.add_xp(-30)
+            self.data["monthly_tasks"] = [t for t in self.data["monthly_tasks"] if t["id"] != task_id]
             self.save()
             return True
         return False
