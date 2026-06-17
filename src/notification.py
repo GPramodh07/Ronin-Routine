@@ -15,15 +15,26 @@ class NotificationHelper:
         except FileNotFoundError:
             return False
 
-    def send(self, title, message, tray_icon=None):
+    def send(self, title, message, tray_icon=None, urgency="normal"):
         """
         Sends a native Linux KDE notification.
-        If a tray_icon is provided and supports showMessage, use it.
-        Otherwise, fall back to native notify-send or kdialog.
+        Attempts notify-send first to allow setting custom urgency (to bypass DND/fullscreen).
+        If notify-send is unavailable or fails, falls back to QSystemTrayIcon or kdialog.
         """
-        print(f"Notification triggered: {title} - {message}")
+        print(f"Notification triggered: {title} - {message} (urgency: {urgency})")
 
-        # 1. Try QSystemTrayIcon if active
+        # 1. Try notify-send (highly integrated with KDE Plasma notification center)
+        if self.has_notify_send:
+            try:
+                cmd = ["notify-send", "-a", "Ronin Routine", "-u", urgency, title, message]
+                if self.app_icon_path and os.path.exists(self.app_icon_path):
+                    cmd.extend(["-i", self.app_icon_path])
+                subprocess.Popen(cmd)
+                return
+            except Exception as e:
+                print(f"notify-send failed: {e}")
+
+        # 2. Try QSystemTrayIcon if active
         if tray_icon:
             try:
                 # QSystemTrayIcon.MessageIcon.Information
@@ -31,21 +42,6 @@ class NotificationHelper:
                 return
             except Exception as e:
                 print(f"Tray notification failed, trying fallback: {e}")
-
-        # 2. Try notify-send (highly integrated with KDE Plasma notification center)
-        if self.has_notify_send:
-            try:
-                cmd = ["notify-send", "-a", "Ronin Routine", title, message]
-                if self.app_icon_path and os.path.exists(self.app_icon_path):
-                    cmd.extend(["-i", self.app_icon_path])
-                    # Add sound-file hint if zen_chime.wav exists in the assets folder
-                    chime_path = os.path.join(os.path.dirname(self.app_icon_path), "zen_chime.wav")
-                    if os.path.exists(chime_path):
-                        cmd.extend(["-h", f"string:sound-file:{chime_path}"])
-                subprocess.Popen(cmd)
-                return
-            except Exception as e:
-                print(f"notify-send failed: {e}")
 
         # 3. Try kdialog (KDE specific backup)
         if self.has_kdialog:
